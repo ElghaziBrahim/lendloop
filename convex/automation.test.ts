@@ -619,6 +619,72 @@ describe("per-loan activity query", () => {
   });
 });
 
+describe("board-wide activity feed", () => {
+  beforeEach(() => {
+    process.env.N8N_HMAC_SECRET = TEST_SECRET;
+  });
+
+  test("returns recent events to an admin, newest first", async () => {
+    const t = setup();
+    const base = await seedOverdue(t);
+
+    await signedFetch(t, "/n8n/reminder-result", {
+      method: "POST",
+      body: reminderBody(base.loanId, { sentAt: 1_763_000_000_000 }),
+    });
+
+    const events = await t
+      .withIdentity(signIn(ADMIN_EMAIL))
+      .query(api.automation.recentActivity, {});
+
+    expect(events.length).toBeGreaterThan(0);
+    expect(events[0]).toMatchObject({
+      kind: "reminder.sent",
+      direction: "inbound",
+      status: "delivered",
+    });
+    for (let i = 1; i < events.length; i += 1) {
+      expect(events[i - 1].createdAt).toBeGreaterThanOrEqual(events[i].createdAt);
+    }
+  });
+
+  test("caps the feed at the requested limit", async () => {
+    const t = setup();
+    const base = await seedOverdue(t);
+
+    await signedFetch(t, "/n8n/reminder-result", {
+      method: "POST",
+      body: reminderBody(base.loanId, { sentAt: 1_763_000_000_000 }),
+    });
+
+    const events = await t
+      .withIdentity(signIn(ADMIN_EMAIL))
+      .query(api.automation.recentActivity, { limit: 1 });
+
+    expect(events).toHaveLength(1);
+  });
+
+  test("is forbidden for a signed-in member", async () => {
+    const t = setup();
+    await seedOverdue(t);
+
+    await expect(
+      t
+        .withIdentity(signIn(BORROWER_EMAIL))
+        .query(api.automation.recentActivity, {}),
+    ).rejects.toMatchObject({ data: { code: "FORBIDDEN" } });
+  });
+
+  test("requires a signed-in caller", async () => {
+    const t = setup();
+    await seedOverdue(t);
+
+    await expect(
+      t.query(api.automation.recentActivity, {}),
+    ).rejects.toMatchObject({ data: { code: "UNAUTHENTICATED" } });
+  });
+});
+
 describe("outbound request notification", () => {
   type CapturedRequest = {
     method: string;

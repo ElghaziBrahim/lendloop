@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { internalAction, query } from "./_generated/server";
-import { requireUser } from "./lib/authz";
+import { requireAdmin, requireUser } from "./lib/authz";
 import { signAutomationRequest } from "./lib/signing";
 import {
   automationDirectionValidator,
@@ -191,7 +191,51 @@ export const notifyRequest = internalAction({
 });
 
 /**
+ * The board-wide automation feed: the most recent events from both directions,
+ * newest first. Admin only — it names workflows and failures for every loan,
+ * which is the admin surface's job, not a member's.
+ *
+ * This is the read side of the audit trail the outbound notification and the
+ * n8n write-back write to, and the place to look when a workflow goes quiet.
+ */
+export const recentActivity = query({
+  args: { limit: v.optional(v.number()) },
+  returns: v.array(
+    v.object({
+      _id: v.id("automationEvents"),
+      kind: v.string(),
+      direction: automationDirectionValidator,
+      workflow: v.union(v.string(), v.null()),
+      status: automationStatusValidator,
+      lastError: v.union(v.string(), v.null()),
+      createdAt: v.number(),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    const limit = Math.min(Math.max(Math.trunc(args.limit ?? 12), 1), 50);
+    const events = await ctx.db
+      .query("automationEvents")
+      .withIndex("by_created")
+      .order("desc")
+      .take(limit);
+
+    return events.map((event) => ({
+      _id: event._id,
+      kind: event.kind,
+      direction: event.direction,
+      workflow: event.workflow ?? null,
+      status: event.status,
+      lastError: event.lastError ?? null,
+      createdAt: event.createdAt,
+    }));
+  },
+});
+
+/**
  * The per-loan automation feed: every inbound reminder outcome for one loan,
+
  * newest first, with its timestamp and status.
  *
  * Visible to the borrower, the lender and admins. Everyone else gets FORBIDDEN,

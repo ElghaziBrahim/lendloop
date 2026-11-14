@@ -301,6 +301,80 @@ function AdminPanels() {
           </ul>
         )}
       </Section>
+
+      <AutomationFeed />
     </div>
+  );
+}
+
+/**
+ * The audit trail of the Convex <-> n8n boundary, newest first.
+ *
+ * Every outbound notification and every signed write-back lands in
+ * `automationEvents`; this is the surface that proves a workflow ran, and names
+ * the error when one failed. Admin-only, because it covers every loan.
+ */
+function AutomationFeed() {
+  const events = useQuery(api.automation.recentActivity, {});
+
+  return (
+    <Section
+      title="Automation"
+      description="Every signed call between Convex and n8n, newest first. A delivered row means the workflow accepted the request; a failed row carries the error."
+      actions={
+        events === undefined ? null : (
+          <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            {events.length} {events.length === 1 ? "event" : "events"}
+          </span>
+        )
+      }
+    >
+      {events === undefined ? (
+        <SkeletonList rows={3} label="Loading automation events…" />
+      ) : events.length === 0 ? (
+        <div className="p-4 sm:p-5">
+          <EmptyState
+            title="No automation events yet"
+            body="Create a request and the outbound notification is recorded here, along with the signed write-back that follows."
+          />
+        </div>
+      ) : (
+        <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          {events.map((event) => (
+            <li
+              key={event._id}
+              className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:px-5"
+            >
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium break-words">
+                    {event.kind}
+                  </span>
+                  {event.workflow ? (
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                      {event.workflow}
+                    </span>
+                  ) : null}
+                  <Badge tone={event.status === "delivered" ? "emerald" : "red"}>
+                    {event.status}
+                  </Badge>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {event.direction}
+                  </span>
+                </div>
+                {event.lastError ? (
+                  <p className="mt-1 text-xs break-words text-red-600 dark:text-red-400">
+                    {event.lastError}
+                  </p>
+                ) : null}
+              </div>
+              <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
+                {formatTimestamp(event.createdAt)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Section>
   );
 }
