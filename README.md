@@ -12,7 +12,7 @@ The app is built with Next.js 16 (App Router), Clerk, Convex and n8n. Three n8n 
 |---|---|
 | Visitor | See active tool names and categories. Nothing else. |
 | Member | List a tool, request one for inclusive dates, cancel a pending request, see their own requests and loans, decide requests for their own tools, and mark a loan they lent as returned. |
-| Admin | Everything a member can do, plus remove any listing, see every listing and loan, and mark any lender trusted. |
+| Admin | Everything a member can do, plus remove any listing, see every listing and loan, mark any lender trusted, and read the automation activity trail. |
 
 Membership starts from the database, not from a client claim. `ADMIN_EMAILS` seeds the first admin row; after that the role lives in the `users` table and an admin cannot be promoted by editing a token.
 
@@ -217,6 +217,33 @@ N8N_HMAC_SECRET="<the deployment secret>" \
 ```
 
 That checks that an unsigned `/n8n/overdue` gets 401, a signed call gets 200, and a replayed reminder-result key returns `duplicate: true` without a second write.
+
+### 9. Deploy to Vercel (optional)
+
+The app is a stock Next.js project, so Vercel needs no build override. Convex functions are deployed from the CLI, separately from the frontend build:
+
+```bash
+npx convex deploy                     # pushes convex/ to the production deployment
+npx convex run --prod seed:dev        # optional: the demo shelf, only on a fresh deployment
+```
+
+On the production Convex deployment, set `CLERK_JWT_ISSUER_DOMAIN`, `ADMIN_EMAILS`, `N8N_HMAC_SECRET` and `N8N_REQUEST_WEBHOOK_URL` **before** the first `npx convex deploy`: the auth config is read from the deployment's environment at deploy time.
+
+Then import the repository at vercel.com, keep the detected Next.js preset, and add these variables for Production, Preview and Development:
+
+| Variable | Value |
+|---|---|
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | the Clerk publishable key for the instance the deployment validates |
+| `CLERK_SECRET_KEY` | the matching Clerk secret key |
+| `NEXT_PUBLIC_CONVEX_URL` | `https://<production-deployment>.convex.cloud` |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | `/sign-in` |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | `/sign-up` |
+| `NEXT_PUBLIC_CONVEX_SITE_URL` | `https://<production-deployment>.convex.site` (not read by the app, kept for parity) |
+
+`N8N_HMAC_SECRET` never goes to Vercel: it lives on the Convex deployment and in n8n, nowhere else.
+
+A Clerk development instance (`pk_test_…`) works from any origin, so a `*.vercel.app` host is fine for a demo. A Clerk production instance needs a domain you control: Clerk serves its Frontend API on `clerk.<your-domain>`, which means a CNAME that `*.vercel.app` cannot take.
+
 
 ## Environment variables
 
