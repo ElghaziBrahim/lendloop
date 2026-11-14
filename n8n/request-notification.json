@@ -1,0 +1,209 @@
+{
+  "name": "LendLoop · Request notification",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lendloop/request-created",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "lendloop-webhook-request",
+      "name": "Request webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -220,
+        0
+      ],
+      "webhookId": "lendloop-request-created"
+    },
+    {
+      "parameters": {
+        "jsCode": "function readSetting(name) {\n  try {\n    if (typeof $env !== \"undefined\" && $env && $env[name]) return String($env[name]);\n  } catch (error) {\n    // n8n Cloud blocks $env inside nodes; fall through to Global Variables.\n  }\n  try {\n    if (typeof $vars !== \"undefined\" && $vars && $vars[name]) return String($vars[name]);\n  } catch (error) {\n    // Self-hosted Community has no Global Variables; fall through.\n  }\n  return \"\";\n}\n\nfunction requireSetting(name) {\n  const value = readSetting(name);\n  if (!value) {\n    throw new Error(\n      name + \" is not configured. Set it as an n8n environment variable ($env) or a Global Variable ($vars).\",\n    );\n  }\n  return value;\n}\n\nfunction sign(timestamp, body) {\n  const secret = requireSetting(\"N8N_HMAC_SECRET\");\n  return require(\"crypto\")\n    .createHmac(\"sha256\", secret)\n    .update(timestamp + \".\" + body, \"utf8\")\n    .digest(\"hex\");\n}\n\nfunction convexBaseUrl() {\n  return requireSetting(\"LENDLOOP_CONVEX_SITE_URL\").replace(/\\/+$/, \"\");\n}\n\nfunction escapeHtml(value) {\n  return String(value === null || value === undefined ? \"\" : value).replace(\n    /[&<>\"']/g,\n    (character) =>\n      ({ \"&\": \"&amp;\", \"<\": \"&lt;\", \">\": \"&gt;\", '\"': \"&quot;\", \"'\": \"&#39;\" })[character],\n  );\n}\n\nconst item = $input.first();\nconst headers = item.json.headers || {};\nconst timestamp = String(headers[\"x-lendloop-timestamp\"] || \"\").trim();\nconst signature = String(headers[\"x-lendloop-signature\"] || \"\")\n  .trim()\n  .toLowerCase();\n\n// The signature covers the exact bytes Convex sent, so read the raw body the\n// Webhook node stored in the \"data\" binary property, never a re-serialised\n// object. Three paths because the runtime differs: the editor's Code node\n// exposes helpers.getBinaryDataBuffer, a task runner may only expose the\n// binary item, and the last resort is whatever the webhook parsed.\nlet raw = \"\";\nconst binary = item.binary && item.binary.data ? item.binary.data : null;\ntry {\n  if (this.helpers && typeof this.helpers.getBinaryDataBuffer === \"function\") {\n    const buffer = await this.helpers.getBinaryDataBuffer(0, \"data\");\n    if (buffer && buffer.length > 0) raw = buffer.toString(\"utf8\");\n  }\n} catch (error) {\n  // No helper in this runtime; fall through to the binary item.\n}\nif (!raw && binary && typeof binary.data === \"string\") {\n  raw = Buffer.from(binary.data, \"base64\").toString(\"utf8\");\n}\nif (!raw) {\n  raw =\n    typeof item.json.body === \"string\"\n      ? item.json.body\n      : JSON.stringify(item.json.body === undefined ? {} : item.json.body);\n}\n\nconst secretConfigured = Boolean(readSetting(\"N8N_HMAC_SECRET\"));\nlet reason = \"\";\n\nif (!secretConfigured) {\n  reason = \"secret_not_configured\";\n} else if (!/^\\d{13}$/.test(timestamp)) {\n  reason = \"malformed_timestamp\";\n} else if (!/^[0-9a-f]{64}$/.test(signature)) {\n  reason = \"malformed_signature\";\n} else if (Math.abs(Date.now() - Number(timestamp)) > 5 * 60 * 1000) {\n  reason = \"timestamp_out_of_window\";\n} else {\n  const expected = sign(timestamp, raw);\n  const left = Buffer.from(expected, \"utf8\");\n  const right = Buffer.from(signature, \"utf8\");\n  if (left.length !== right.length || !require(\"crypto\").timingSafeEqual(left, right)) {\n    reason = \"signature_mismatch\";\n  }\n}\n\nlet payload = null;\ntry {\n  payload = JSON.parse(raw);\n} catch (error) {\n  if (!reason) reason = \"invalid_json\";\n}\n\nreturn [{ json: { verified: reason === \"\", reason, payload, receivedAt: Date.now() } }];"
+      },
+      "id": "lendloop-verify-signature",
+      "name": "Verify signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "lendloop-condition-verified",
+              "leftValue": "={{ $json.verified }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "lendloop-if-verified",
+      "name": "Signature valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function readSetting(name) {\n  try {\n    if (typeof $env !== \"undefined\" && $env && $env[name]) return String($env[name]);\n  } catch (error) {\n    // n8n Cloud blocks $env inside nodes; fall through to Global Variables.\n  }\n  try {\n    if (typeof $vars !== \"undefined\" && $vars && $vars[name]) return String($vars[name]);\n  } catch (error) {\n    // Self-hosted Community has no Global Variables; fall through.\n  }\n  return \"\";\n}\n\nfunction requireSetting(name) {\n  const value = readSetting(name);\n  if (!value) {\n    throw new Error(\n      name + \" is not configured. Set it as an n8n environment variable ($env) or a Global Variable ($vars).\",\n    );\n  }\n  return value;\n}\n\nfunction sign(timestamp, body) {\n  const secret = requireSetting(\"N8N_HMAC_SECRET\");\n  return require(\"crypto\")\n    .createHmac(\"sha256\", secret)\n    .update(timestamp + \".\" + body, \"utf8\")\n    .digest(\"hex\");\n}\n\nfunction convexBaseUrl() {\n  return requireSetting(\"LENDLOOP_CONVEX_SITE_URL\").replace(/\\/+$/, \"\");\n}\n\nfunction escapeHtml(value) {\n  return String(value === null || value === undefined ? \"\" : value).replace(\n    /[&<>\"']/g,\n    (character) =>\n      ({ \"&\": \"&amp;\", \"<\": \"&lt;\", \">\": \"&gt;\", '\"': \"&quot;\", \"'\": \"&#39;\" })[character],\n  );\n}\n\nconst payload = $input.first().json.payload || {};\nconst tool = payload.tool || {};\nconst borrower = payload.borrower || {};\nconst owner = payload.owner || {};\nconst toolName = tool.name || \"a tool\";\nconst borrowerName = borrower.name || borrower.email || \"A neighbour\";\nconst ownerName = owner.name || \"the owner\";\n\nconst startDate = payload.startDate || \"\";\nconst endDate = payload.endDate || \"\";\nconst note = payload.message ? String(payload.message) : \"\";\n\nconst subject = \"LendLoop: \" + toolName + \" requested by \" + borrowerName;\nconst lines = [\n  \"Hi \" + ownerName + \",\",\n  \"\",\n  borrowerName + \" asked to borrow \" + toolName + \" from \" + startDate + \" to \" + endDate + \".\",\n  note ? \"Message: \" + note : \"\",\n  \"\",\n  \"Open LendLoop to approve or decline the request.\",\n].filter((line) => line !== \"\");\n\nconst html = [\n  \"<p>Hi \" + escapeHtml(ownerName) + \",</p>\",\n  \"<p><strong>\" + escapeHtml(borrowerName) + \"</strong> asked to borrow <strong>\" + escapeHtml(toolName) + \"</strong> from \" + escapeHtml(startDate) + \" to \" + escapeHtml(endDate) + \".</p>\",\n  note ? \"<p>Message: \" + escapeHtml(note) + \"</p>\" : \"\",\n  \"<p>Open LendLoop to approve or decline the request.</p>\",\n].join(\"\");\n\nreturn [\n  {\n    json: {\n      requestId: payload.requestId || \"\",\n      idempotencyKey: payload.idempotencyKey || \"\",\n      from: readSetting(\"LENDLOOP_FROM_EMAIL\") || \"LendLoop <notifications@example.com>\",\n      to: owner.email || \"\",\n      subject,\n      text: lines.join(\"\\n\"),\n      html,\n    },\n  },\n];"
+      },
+      "id": "lendloop-build-notification",
+      "name": "Build notification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ from: $json.from, to: [$json.to], subject: $json.subject, html: $json.html, text: $json.text }) }}",
+        "options": {}
+      },
+      "id": "lendloop-send-email",
+      "name": "Send email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, delivered: true, requestId: $('Build notification').first().json.requestId }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "lendloop-respond-200",
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, error: \"unauthorized\", reason: $json.reason }) }}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "lendloop-respond-401",
+      "name": "Respond 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        120
+      ]
+    }
+  ],
+  "connections": {
+    "Request webhook": {
+      "main": [
+        [
+          {
+            "node": "Verify signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify signature": {
+      "main": [
+        [
+          {
+            "node": "Signature valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signature valid?": {
+      "main": [
+        [
+          {
+            "node": "Build notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build notification": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send email": {
+      "main": [
+        [
+          {
+            "node": "Respond 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "tags": []
+}

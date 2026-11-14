@@ -1,0 +1,265 @@
+{
+  "name": "LendLoop · Overdue reminders",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "lendloop-schedule-overdue",
+      "name": "Every day at 09:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -220,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "lendloop-manual-overdue",
+      "name": "Manual run",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function readSetting(name) {\n  try {\n    if (typeof $env !== \"undefined\" && $env && $env[name]) return String($env[name]);\n  } catch (error) {\n    // n8n Cloud blocks $env inside nodes; fall through to Global Variables.\n  }\n  try {\n    if (typeof $vars !== \"undefined\" && $vars && $vars[name]) return String($vars[name]);\n  } catch (error) {\n    // Self-hosted Community has no Global Variables; fall through.\n  }\n  return \"\";\n}\n\nfunction requireSetting(name) {\n  const value = readSetting(name);\n  if (!value) {\n    throw new Error(\n      name + \" is not configured. Set it as an n8n environment variable ($env) or a Global Variable ($vars).\",\n    );\n  }\n  return value;\n}\n\nfunction sign(timestamp, body) {\n  const secret = requireSetting(\"N8N_HMAC_SECRET\");\n  return require(\"crypto\")\n    .createHmac(\"sha256\", secret)\n    .update(timestamp + \".\" + body, \"utf8\")\n    .digest(\"hex\");\n}\n\nfunction convexBaseUrl() {\n  return requireSetting(\"LENDLOOP_CONVEX_SITE_URL\").replace(/\\/+$/, \"\");\n}\n\nfunction escapeHtml(value) {\n  return String(value === null || value === undefined ? \"\" : value).replace(\n    /[&<>\"']/g,\n    (character) =>\n      ({ \"&\": \"&amp;\", \"<\": \"&lt;\", \">\": \"&gt;\", '\"': \"&quot;\", \"'\": \"&#39;\" })[character],\n  );\n}\n\nconst timestamp = String(Date.now());\nconst signature = sign(timestamp, \"\");\n\nreturn [\n  {\n    json: {\n      url: convexBaseUrl() + \"/n8n/overdue\",\n      headers: {\n        \"x-lendloop-timestamp\": timestamp,\n        \"x-lendloop-signature\": signature,\n      },\n    },\n  },\n];"
+      },
+      "id": "lendloop-build-overdue-request",
+      "name": "Build overdue request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-lendloop-timestamp",
+              "value": "={{ $json.headers['x-lendloop-timestamp'] }}"
+            },
+            {
+              "name": "x-lendloop-signature",
+              "value": "={{ $json.headers['x-lendloop-signature'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "lendloop-fetch-overdue",
+      "name": "Fetch overdue loans",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function readSetting(name) {\n  try {\n    if (typeof $env !== \"undefined\" && $env && $env[name]) return String($env[name]);\n  } catch (error) {\n    // n8n Cloud blocks $env inside nodes; fall through to Global Variables.\n  }\n  try {\n    if (typeof $vars !== \"undefined\" && $vars && $vars[name]) return String($vars[name]);\n  } catch (error) {\n    // Self-hosted Community has no Global Variables; fall through.\n  }\n  return \"\";\n}\n\nfunction requireSetting(name) {\n  const value = readSetting(name);\n  if (!value) {\n    throw new Error(\n      name + \" is not configured. Set it as an n8n environment variable ($env) or a Global Variable ($vars).\",\n    );\n  }\n  return value;\n}\n\nfunction sign(timestamp, body) {\n  const secret = requireSetting(\"N8N_HMAC_SECRET\");\n  return require(\"crypto\")\n    .createHmac(\"sha256\", secret)\n    .update(timestamp + \".\" + body, \"utf8\")\n    .digest(\"hex\");\n}\n\nfunction convexBaseUrl() {\n  return requireSetting(\"LENDLOOP_CONVEX_SITE_URL\").replace(/\\/+$/, \"\");\n}\n\nfunction escapeHtml(value) {\n  return String(value === null || value === undefined ? \"\" : value).replace(\n    /[&<>\"']/g,\n    (character) =>\n      ({ \"&\": \"&amp;\", \"<\": \"&lt;\", \">\": \"&gt;\", '\"': \"&quot;\", \"'\": \"&#39;\" })[character],\n  );\n}\n\nconst response = $input.first().json || {};\nconst loans = Array.isArray(response.loans) ? response.loans : [];\n\n// Workflow static data is the in-n8n half of idempotency: the Convex ledger\n// rejects a repeated key, and this stops the reminder being emailed twice in\n// the first place.\nconst store = $getWorkflowStaticData(\"global\");\nstore.sent = store.sent && typeof store.sent === \"object\" ? store.sent : {};\nconst cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;\nfor (const key of Object.keys(store.sent)) {\n  if (typeof store.sent[key] === \"number\" && store.sent[key] < cutoff) {\n    delete store.sent[key];\n  }\n}\n\nconst from = readSetting(\"LENDLOOP_FROM_EMAIL\") || \"LendLoop <notifications@example.com>\";\nconst reminders = [];\n\nfor (const loan of loans) {\n  const idempotencyKey = \"overdue-reminder:\" + loan.loanId + \":\" + loan.dueDate;\n  if (store.sent[idempotencyKey]) continue;\n\n  const borrowerName = loan.borrowerName || \"there\";\n  const toolName = loan.toolName || \"a tool\";\n  const subject = \"LendLoop: \" + toolName + \" is \" + loan.daysOverdue + \" day(s) overdue\";\n  const text = [\n    \"Hi \" + borrowerName + \",\",\n    \"\",\n    toolName + \" was due back on \" + loan.dueDate + \" and is now \" + loan.daysOverdue + \" day(s) overdue.\",\n    \"Please return it, or message \" + (loan.ownerName || \"the owner\") + \" to arrange an extension.\",\n    \"\",\n    \"You are receiving this because you have an open loan in LendLoop.\",\n  ].join(\"\\n\");\n\n  const html = [\n    \"<p>Hi \" + escapeHtml(borrowerName) + \",</p>\",\n    \"<p><strong>\" + escapeHtml(toolName) + \"</strong> was due back on \" + escapeHtml(loan.dueDate) + \" and is now <strong>\" + escapeHtml(loan.daysOverdue) + \" day(s) overdue</strong>.</p>\",\n    \"<p>Please return it, or message \" + escapeHtml(loan.ownerName || \"the owner\") + \" to arrange an extension.</p>\",\n  ].join(\"\");\n\n  reminders.push({\n    json: {\n      loanId: loan.loanId,\n      dueDate: loan.dueDate,\n      daysOverdue: loan.daysOverdue,\n      idempotencyKey,\n      from,\n      to: loan.borrowerEmail,\n      subject,\n      text,\n      html,\n    },\n  });\n}\n\n// No pending reminders means no items, so the rest of the workflow is skipped\n// and the execution still finishes green.\nreturn reminders;"
+      },
+      "id": "lendloop-prepare-reminders",
+      "name": "Prepare reminders",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ from: $json.from, to: [$json.to], subject: $json.subject, html: $json.html, text: $json.text }) }}",
+        "options": {}
+      },
+      "id": "lendloop-send-reminder",
+      "name": "Send reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function readSetting(name) {\n  try {\n    if (typeof $env !== \"undefined\" && $env && $env[name]) return String($env[name]);\n  } catch (error) {\n    // n8n Cloud blocks $env inside nodes; fall through to Global Variables.\n  }\n  try {\n    if (typeof $vars !== \"undefined\" && $vars && $vars[name]) return String($vars[name]);\n  } catch (error) {\n    // Self-hosted Community has no Global Variables; fall through.\n  }\n  return \"\";\n}\n\nfunction requireSetting(name) {\n  const value = readSetting(name);\n  if (!value) {\n    throw new Error(\n      name + \" is not configured. Set it as an n8n environment variable ($env) or a Global Variable ($vars).\",\n    );\n  }\n  return value;\n}\n\nfunction sign(timestamp, body) {\n  const secret = requireSetting(\"N8N_HMAC_SECRET\");\n  return require(\"crypto\")\n    .createHmac(\"sha256\", secret)\n    .update(timestamp + \".\" + body, \"utf8\")\n    .digest(\"hex\");\n}\n\nfunction convexBaseUrl() {\n  return requireSetting(\"LENDLOOP_CONVEX_SITE_URL\").replace(/\\/+$/, \"\");\n}\n\nfunction escapeHtml(value) {\n  return String(value === null || value === undefined ? \"\" : value).replace(\n    /[&<>\"']/g,\n    (character) =>\n      ({ \"&\": \"&amp;\", \"<\": \"&lt;\", \">\": \"&gt;\", '\"': \"&quot;\", \"'\": \"&#39;\" })[character],\n  );\n}\n\nconst results = $input.all();\nconst prepared = $('Prepare reminders').all();\nconst base = convexBaseUrl();\nconst now = Date.now();\n\nreturn results.map((result, index) => {\n  const reminder = (prepared[index] || { json: {} }).json;\n  const body = JSON.stringify({\n    idempotencyKey: reminder.idempotencyKey,\n    loanId: reminder.loanId,\n    kind: \"overdue\",\n    status: \"sent\",\n    sentAt: now,\n  });\n  const timestamp = String(now);\n  return {\n    json: {\n      idempotencyKey: reminder.idempotencyKey,\n      url: base + \"/n8n/reminder-result\",\n      body,\n      headers: {\n        \"x-lendloop-timestamp\": timestamp,\n        \"x-lendloop-signature\": sign(timestamp, body),\n      },\n      emailId: (result.json && result.json.id) || null,\n    },\n  };\n});"
+      },
+      "id": "lendloop-build-write-back",
+      "name": "Build write-back",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-lendloop-timestamp",
+              "value": "={{ $json.headers['x-lendloop-timestamp'] }}"
+            },
+            {
+              "name": "x-lendloop-signature",
+              "value": "={{ $json.headers['x-lendloop-signature'] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}",
+        "options": {}
+      },
+      "id": "lendloop-write-back",
+      "name": "Write back to Convex",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function readSetting(name) {\n  try {\n    if (typeof $env !== \"undefined\" && $env && $env[name]) return String($env[name]);\n  } catch (error) {\n    // n8n Cloud blocks $env inside nodes; fall through to Global Variables.\n  }\n  try {\n    if (typeof $vars !== \"undefined\" && $vars && $vars[name]) return String($vars[name]);\n  } catch (error) {\n    // Self-hosted Community has no Global Variables; fall through.\n  }\n  return \"\";\n}\n\nfunction requireSetting(name) {\n  const value = readSetting(name);\n  if (!value) {\n    throw new Error(\n      name + \" is not configured. Set it as an n8n environment variable ($env) or a Global Variable ($vars).\",\n    );\n  }\n  return value;\n}\n\nfunction sign(timestamp, body) {\n  const secret = requireSetting(\"N8N_HMAC_SECRET\");\n  return require(\"crypto\")\n    .createHmac(\"sha256\", secret)\n    .update(timestamp + \".\" + body, \"utf8\")\n    .digest(\"hex\");\n}\n\nfunction convexBaseUrl() {\n  return requireSetting(\"LENDLOOP_CONVEX_SITE_URL\").replace(/\\/+$/, \"\");\n}\n\nfunction escapeHtml(value) {\n  return String(value === null || value === undefined ? \"\" : value).replace(\n    /[&<>\"']/g,\n    (character) =>\n      ({ \"&\": \"&amp;\", \"<\": \"&lt;\", \">\": \"&gt;\", '\"': \"&quot;\", \"'\": \"&#39;\" })[character],\n  );\n}\n\nconst store = $getWorkflowStaticData(\"global\");\nstore.sent = store.sent && typeof store.sent === \"object\" ? store.sent : {};\nconst now = Date.now();\n\nconst written = $('Build write-back').all();\nfor (const item of written) {\n  if (item.json.idempotencyKey) store.sent[item.json.idempotencyKey] = now;\n}\n\nconst responses = $input.all().map((item) => item.json || {});\nconst duplicates = responses.filter((response) => response.duplicate === true).length;\n\nreturn [\n  {\n    json: {\n      attempted: written.length,\n      duplicates,\n      remembered: Object.keys(store.sent).length,\n    },\n  },\n];"
+      },
+      "id": "lendloop-remember-sent",
+      "name": "Remember sent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Every day at 09:00": {
+      "main": [
+        [
+          {
+            "node": "Build overdue request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual run": {
+      "main": [
+        [
+          {
+            "node": "Build overdue request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build overdue request": {
+      "main": [
+        [
+          {
+            "node": "Fetch overdue loans",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch overdue loans": {
+      "main": [
+        [
+          {
+            "node": "Prepare reminders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare reminders": {
+      "main": [
+        [
+          {
+            "node": "Send reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send reminder": {
+      "main": [
+        [
+          {
+            "node": "Build write-back",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build write-back": {
+      "main": [
+        [
+          {
+            "node": "Write back to Convex",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write back to Convex": {
+      "main": [
+        [
+          {
+            "node": "Remember sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "tags": []
+}

@@ -1,0 +1,80 @@
+{
+  "name": "LendLoop · Error handler",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "lendloop-error-trigger",
+      "name": "On workflow error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function readSetting(name) {\n  try {\n    if (typeof $env !== \"undefined\" && $env && $env[name]) return String($env[name]);\n  } catch (error) {\n    // n8n Cloud blocks $env inside nodes; fall through to Global Variables.\n  }\n  try {\n    if (typeof $vars !== \"undefined\" && $vars && $vars[name]) return String($vars[name]);\n  } catch (error) {\n    // Self-hosted Community has no Global Variables; fall through.\n  }\n  return \"\";\n}\n\nfunction requireSetting(name) {\n  const value = readSetting(name);\n  if (!value) {\n    throw new Error(\n      name + \" is not configured. Set it as an n8n environment variable ($env) or a Global Variable ($vars).\",\n    );\n  }\n  return value;\n}\n\nfunction sign(timestamp, body) {\n  const secret = requireSetting(\"N8N_HMAC_SECRET\");\n  return require(\"crypto\")\n    .createHmac(\"sha256\", secret)\n    .update(timestamp + \".\" + body, \"utf8\")\n    .digest(\"hex\");\n}\n\nfunction convexBaseUrl() {\n  return requireSetting(\"LENDLOOP_CONVEX_SITE_URL\").replace(/\\/+$/, \"\");\n}\n\nfunction escapeHtml(value) {\n  return String(value === null || value === undefined ? \"\" : value).replace(\n    /[&<>\"']/g,\n    (character) =>\n      ({ \"&\": \"&amp;\", \"<\": \"&lt;\", \">\": \"&gt;\", '\"': \"&quot;\", \"'\": \"&#39;\" })[character],\n  );\n}\n\nconst event = $input.first().json || {};\nconst workflow = event.workflow || {};\nconst execution = event.execution || {};\nconst error = execution.error || {};\n\nconst workflowName = workflow.name || \"an unknown workflow\";\nconst nodeName = execution.lastNodeExecuted || \"an unknown node\";\nconst message = error.message || event.error || \"No error message was provided.\";\nconst executionId = execution.id || \"\";\nconst executionUrl = execution.url || \"\";\n\nconst subject = \"LendLoop alert: \" + workflowName + \" failed\";\nconst text = [\n  workflowName + \" failed.\",\n  \"\",\n  \"Node: \" + nodeName,\n  \"Error: \" + message,\n  executionId ? \"Execution: \" + executionId : \"\",\n  executionUrl ? \"Open: \" + executionUrl : \"\",\n  \"\",\n  \"Nothing was retried automatically. Fix the cause, then replay the execution.\",\n].filter(Boolean).join(\"\\n\");\n\nconst html = [\n  \"<p><strong>\" + escapeHtml(workflowName) + \"</strong> failed.</p>\",\n  \"<p>Node: \" + escapeHtml(nodeName) + \"<br>Error: \" + escapeHtml(message) + \"</p>\",\n  executionUrl\n    ? '<p><a href=\"' + escapeHtml(executionUrl) + '\">Open the failed execution</a></p>'\n    : \"\",\n  \"<p>Nothing was retried automatically. Fix the cause, then replay the execution.</p>\",\n].join(\"\");\n\nreturn [\n  {\n    json: {\n      workflowId: workflow.id || \"\",\n      workflowName,\n      nodeName,\n      message,\n      executionId,\n      executionUrl,\n      from: readSetting(\"LENDLOOP_FROM_EMAIL\") || \"LendLoop <notifications@example.com>\",\n      to: readSetting(\"LENDLOOP_ALERT_EMAIL\"),\n      subject,\n      text,\n      html,\n    },\n  },\n];"
+      },
+      "id": "lendloop-format-alert",
+      "name": "Format alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ from: $json.from, to: [$json.to], subject: $json.subject, html: $json.html, text: $json.text }) }}",
+        "options": {}
+      },
+      "id": "lendloop-send-alert",
+      "name": "Send alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "On workflow error": {
+      "main": [
+        [
+          {
+            "node": "Format alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format alert": {
+      "main": [
+        [
+          {
+            "node": "Send alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "tags": []
+}

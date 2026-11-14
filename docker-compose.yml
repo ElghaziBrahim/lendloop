@@ -1,0 +1,73 @@
+# Self-hosted n8n for LendLoop.
+#
+#   cp n8n/.env.example .env  # fill in the values, never commit .env
+#   docker compose up -d      # http://localhost:5678
+#
+# After the first start:
+#   1. Import the three workflows in ./n8n (Workflows -> Import from file).
+#   2. Create a header-auth credential named "Resend API key"
+#      (Authorization: Bearer <Resend key>) and select it on the three email
+#      nodes. It is deliberately not in the JSON: credentials never ship.
+#   3. Open each workflow -> Settings -> Error Workflow and pick
+#      "LendLoop · Error handler". Then publish that error workflow as well:
+#      n8n 2.x skips an inactive error workflow with "Workflow ... is not active
+#      and cannot be executed".
+#   4. Publish both other workflows, then point Convex's
+#      N8N_REQUEST_WEBHOOK_URL at
+#      http://<this-host>:5678/webhook/lendloop/request-created.
+services:
+  n8n:
+    image: n8nio/n8n:2.26.3
+    restart: unless-stopped
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    environment:
+      # --- public address ---------------------------------------------------
+      N8N_HOST: ${N8N_HOST:-localhost}
+      N8N_PORT: 5678
+      N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-UTC}
+      TZ: ${GENERIC_TIMEZONE:-UTC}
+
+      # --- instance secrets -------------------------------------------------
+      # Encrypts stored credentials; losing it means re-entering every credential.
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?set N8N_ENCRYPTION_KEY in .env}
+      # Shared with Convex; signs every request in both directions.
+      N8N_HMAC_SECRET: ${N8N_HMAC_SECRET:?set N8N_HMAC_SECRET in .env}
+
+      # --- LendLoop configuration (non-secret) ------------------------------
+      LENDLOOP_CONVEX_SITE_URL: ${LENDLOOP_CONVEX_SITE_URL:?set LENDLOOP_CONVEX_SITE_URL in .env}
+      LENDLOOP_FROM_EMAIL: ${LENDLOOP_FROM_EMAIL:-LendLoop <notifications@example.com>}
+      LENDLOOP_ALERT_EMAIL: ${LENDLOOP_ALERT_EMAIL:-admin@example.com}
+
+      # --- node sandbox -----------------------------------------------------
+      # n8n 2.x blocks $env inside nodes by default. The workflows resolve their
+      # secret as $env first and $vars second, so self-hosted reads the values
+      # below, while n8n Cloud falls back to Global Variables.
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      # The Code nodes HMAC-sign with node:crypto, the one built-in module n8n
+      # Cloud also exposes. Self-hosted must allow it explicitly.
+      NODE_FUNCTION_ALLOW_BUILTIN: "crypto"
+
+      # --- local-only conveniences -----------------------------------------
+      N8N_SECURE_COOKIE: "false" # http on localhost; turn on behind TLS
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      N8N_HIRING_BANNER_ENABLED: "false"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - --spider
+        - --quiet
+        - http://127.0.0.1:5678/healthz
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  n8n_data:
