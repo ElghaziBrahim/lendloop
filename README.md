@@ -6,6 +6,14 @@ The app is built with Next.js 16 (App Router), Clerk, Convex and n8n. Three n8n 
 
 ![The public shelf, signed out](docs/screenshots/public-shelf.png)
 
+## Live demo
+
+**[lendloop-eta.vercel.app](https://lendloop-eta.vercel.app)**
+
+The demo runs on Vercel against a Convex production deployment and the n8n Cloud workflows. It uses Clerk's development instance, so the sign-in card carries a **Development mode** badge and any email address creates a member account.
+
+Signing in gives you a member account with an empty shelf. To walk the whole loop in one sitting, open two browser profiles: list a tool in the first, request it in the second, then approve and mark it returned in the first. The admin account sees every listing and loan plus the automation trail under **Admin → Automation**. The database is shared and seeded with examples, so do not put anything private in it.
+
 ## What the three roles can do
 
 | Role | Can do |
