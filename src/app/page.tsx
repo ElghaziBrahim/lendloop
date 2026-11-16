@@ -21,6 +21,12 @@ import { WhyBand } from "@/components/landing/WhyBand";
  * A signed-in visitor is redirected to `/dashboard` by the proxy, so this page
  * is always the signed-out view.
  */
+/**
+ * The header reads the session to choose between "Get started" and "Open the
+ * app", so the page renders per request instead of prerendering a shell.
+ */
+export const instant = false;
+
 export default function Home() {
   return (
     <div className="flex min-h-svh flex-col overflow-x-clip bg-background text-foreground">

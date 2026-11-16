@@ -1,4 +1,6 @@
+import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
+import { connection } from "next/server";
 
 /**
  * The design's public header: 76 px, cream ground, a solid 26 px mark, three
@@ -11,7 +13,15 @@ const links = [
   { href: "#why", label: "Why LendLoop" },
 ];
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  // The CTA depends on the session, so this header renders per request rather
+  // than during the static shell's prerender.
+  await connection();
+  const { userId } = await auth();
+  const cta = userId
+    ? { href: "/dashboard", label: "Open the app" }
+    : { href: "/sign-up", label: "Get started" };
+
   return (
     <header className="border-b border-border bg-background">
       <div className="ll-container flex h-[76px] items-center gap-6 lg:gap-[52px]">
@@ -44,10 +54,10 @@ export function SiteHeader() {
         </nav>
 
         <Link
-          href="/sign-up"
+          href={cta.href}
           className="ml-auto inline-flex h-[42px] items-center rounded-sm bg-foreground px-5 text-sm font-semibold whitespace-nowrap text-inverse-foreground transition-colors hover:bg-inverse focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
-          Get started
+          {cta.label}
         </Link>
       </div>
     </header>

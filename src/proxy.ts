@@ -4,11 +4,13 @@ import { NextResponse, type NextRequest } from "next/server";
 /**
  * Clerk's middleware, now called Proxy in Next.js 16.
  *
- * Two gates, both cheap:
- * - `/dashboard` needs a session. A signed-out visitor is redirected to
- *   sign-in (and back afterwards) before the page renders, so no dashboard
- *   HTML is ever streamed to an anonymous request.
- * - A signed-in visitor on `/` belongs on their dashboard, not the public page.
+ * One gate: `/dashboard` needs a session. A signed-out visitor is redirected to
+ * sign-in (and back afterwards) before the page renders, so no dashboard HTML is
+ * ever streamed to an anonymous request.
+ *
+ * `/` stays public for everyone. A signed-in visitor sees the same landing page
+ * with an "Open the app" link in the header; the page is the product's front
+ * door, not a redirect.
  *
  * The redirect is written out rather than left to `auth.protect()`: protect()
  * answers a request it does not classify as a page request with a not-found
@@ -83,10 +85,6 @@ export default clerkMiddleware(async (auth, request) => {
       return signInRedirect(request);
     }
     return;
-  }
-
-  if (pathname === "/" && (await auth()).userId) {
-    return NextResponse.redirect(new URL("/dashboard", requestBase(request)));
   }
 });
 
