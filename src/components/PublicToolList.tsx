@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { fetchQuery } from "convex/nextjs";
 import { api } from "../../convex/_generated/api";
+import { ShelfCard, type PublicTool } from "@/components/landing/ShelfCard";
 
 /**
  * The anonymous shelf.
@@ -10,8 +11,6 @@ import { api } from "../../convex/_generated/api";
  * There is no owner id, email or display name to leak, because the query does
  * not return them in the first place.
  */
-
-type PublicTool = { name: string; category: string };
 
 async function loadTools(): Promise<PublicTool[] | null> {
   // The list must be fresh on every request, so opt this boundary out of
@@ -33,11 +32,12 @@ export async function PublicToolList() {
 
   if (tools === null) {
     return (
-      <div className="max-w-xl">
-        <h2 className="text-2xl font-semibold tracking-tight">On the shelf</h2>
-        <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-          The shelf could not be loaded just now. Refresh the page to try
-          again.
+      <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
+        <p className="font-serif text-[22px] font-semibold text-foreground">
+          The shelf could not be loaded.
+        </p>
+        <p className="mt-2 text-[16px] leading-[26px] text-muted-foreground">
+          Refresh the page to try again.
         </p>
       </div>
     );
@@ -48,45 +48,7 @@ export async function PublicToolList() {
       a.category.localeCompare(b.category) || a.name.localeCompare(b.name),
   );
 
-  return (
-    <div>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight">On the shelf</h2>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Names and categories only. Who owns what stays private.
-          </p>
-        </div>
-        {sorted.length > 0 ? (
-          <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-            {sorted.length} {sorted.length === 1 ? "tool" : "tools"} available
-          </p>
-        ) : null}
-      </div>
-
-      {sorted.length === 0 ? (
-        <p className="mt-8 max-w-xl rounded-xl border border-dashed border-zinc-300 px-5 py-6 text-sm leading-6 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
-          Nothing is on the shelf yet. Sign in and put the first tool on it.
-        </p>
-      ) : (
-        <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {sorted.map((tool, index) => (
-            <li
-              key={`${tool.name}-${tool.category}-${index}`}
-              className="rounded-xl border border-zinc-200 bg-white p-5 transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700"
-            >
-              <p className="text-base font-medium tracking-tight">
-                {tool.name}
-              </p>
-              <p className="mt-3 inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                {tool.category}
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
+  return <ShelfCard tools={sorted} />;
 }
 
 /** The static shell's placeholder; also announced to screen readers. */
@@ -94,21 +56,37 @@ export function PublicToolListSkeleton() {
   return (
     <div>
       <p className="sr-only">Loading the tool list…</p>
-      <h2 className="text-2xl font-semibold tracking-tight">On the shelf</h2>
-      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-        Fetching what is available…
-      </p>
-      <ul
+      <div
         aria-hidden="true"
-        className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+        className="overflow-hidden rounded-lg border border-border bg-card"
       >
-        {Array.from({ length: 6 }, (_, index) => (
-          <li
-            key={index}
-            className="h-[104px] animate-pulse rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900"
-          />
-        ))}
-      </ul>
+        <div className="grid grid-cols-1 lg:grid-cols-[452px_minmax(0,1fr)]">
+          <div className="border-b border-border p-5 lg:border-r lg:border-b-0 lg:p-[30px]">
+            <div className="h-[46px] w-full animate-pulse rounded-[3px] bg-muted" />
+            <div className="mt-5 flex gap-2">
+              {[0, 1, 2].map((chip) => (
+                <div
+                  key={chip}
+                  className="h-[34px] w-20 animate-pulse rounded-full bg-muted"
+                />
+              ))}
+            </div>
+          </div>
+          <div className="divide-y divide-border lg:h-[467px]">
+            {[0, 1, 2, 3].map((row) => (
+              <div
+                key={row}
+                className="flex min-h-[64px] items-center gap-3 px-8 py-[15px]"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+                  <div className="mt-2 h-3 w-20 animate-pulse rounded bg-muted" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -140,8 +140,8 @@ export function RequestsScreen() {
         {shelf === undefined ? (
           <div className="p-4 sm:p-5">
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="h-16 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-              <div className="h-16 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+              <div className="h-16 animate-pulse rounded-lg bg-muted" />
+              <div className="h-16 animate-pulse rounded-lg bg-muted" />
             </div>
           </div>
         ) : borrowable.length === 0 ? (
@@ -209,7 +209,7 @@ export function RequestsScreen() {
                 tool={borrowable.find((tool) => tool._id === activeToolId)}
               />
             ) : (
-              <p className="text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs leading-5 text-subtle-foreground">
                 Choose a tool and both dates to check availability.
               </p>
             )}
@@ -265,7 +265,7 @@ export function RequestsScreen() {
             />
           </div>
         ) : (
-          <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className="divide-y divide-border">
             {pending.map((request) => (
               <li key={request._id}>
                 <RequestRow
@@ -287,7 +287,7 @@ export function RequestsScreen() {
         description="Approved, declined and cancelled requests."
         actions={
           mine === undefined ? null : (
-            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <span className="text-xs font-medium text-subtle-foreground">
               {history.length} {history.length === 1 ? "request" : "requests"}
             </span>
           )
@@ -303,7 +303,7 @@ export function RequestsScreen() {
             />
           </div>
         ) : (
-          <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className="divide-y divide-border">
             {history.map((request) => (
               <li key={request._id}>
                 <RequestRow request={request} />
@@ -327,7 +327,7 @@ function AvailabilityNote({
 }) {
   if (availability === undefined) {
     return (
-      <p className="text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+      <p className="text-xs leading-5 text-subtle-foreground">
         Checking availability…
       </p>
     );
@@ -335,14 +335,14 @@ function AvailabilityNote({
 
   if (availability.available) {
     return (
-      <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200">
+      <p className="rounded-lg border border-positive-tint-strong bg-positive-tint px-3 py-2 text-xs leading-5 text-positive-strong">
         {tool?.name ?? "This tool"} is free for those dates.
       </p>
     );
   }
 
   return (
-    <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">
+    <p className="rounded-lg border border-warn-tint-strong bg-warn-tint px-3 py-2 text-xs leading-5 text-warn-strong">
       Already booked on{" "}
       {availability.conflicts
         .map((conflict) => formatRange(conflict.startDate, conflict.endDate))
@@ -375,19 +375,19 @@ function RequestRow({
             {request.toolName}
           </h3>
           <StatusBadge status={request.status} />
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          <span className="text-xs text-subtle-foreground">
             {request.toolCategory}
           </span>
         </div>
-        <p className="mt-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+        <p className="mt-1.5 text-sm font-medium text-foreground">
           {formatRange(request.startDate, request.endDate)}
         </p>
         {request.message ? (
-          <p className="mt-1 line-clamp-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
             “{request.message}”
           </p>
         ) : null}
-        <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="mt-2 text-xs text-subtle-foreground">
           Asked {formatTimestamp(request.createdAt)}
           {request.status === "approved"
             ? " · approved, now a loan"
@@ -400,7 +400,7 @@ function RequestRow({
         {request.status === "approved" ? (
           <Link
             href="/dashboard/loans"
-            className="mt-2 inline-block text-xs font-medium text-emerald-700 underline-offset-4 hover:underline dark:text-emerald-400"
+            className="mt-2 inline-block text-xs font-medium text-primary underline-offset-4 hover:underline"
           >
             See it in Loans
           </Link>
@@ -410,7 +410,7 @@ function RequestRow({
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         {confirming ? (
           <>
-            <span className="text-xs text-zinc-600 dark:text-zinc-300">
+            <span className="text-xs text-muted-foreground">
               Cancel this request?
             </span>
             <Button
@@ -430,7 +430,7 @@ function RequestRow({
             Cancel request
           </Button>
         ) : request.decidedAt ? (
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          <span className="text-xs text-subtle-foreground">
             Decided {formatTimestamp(request.decidedAt)}
           </span>
         ) : null}

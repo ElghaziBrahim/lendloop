@@ -7,7 +7,7 @@ import { PageHeader, buttonClass } from "@/components/ui";
 
 export function OverviewScreen() {
   return (
-    <div className="space-y-8 sm:space-y-10">
+    <div className="space-y-8">
       <PageHeader
         eyebrow="Dashboard"
         title="Your lending desk"
@@ -16,13 +16,13 @@ export function OverviewScreen() {
           <>
             <Link
               href="/dashboard/listings"
-              className={buttonClass("secondary")}
+              className={buttonClass("primary")}
             >
               List a tool
             </Link>
             <Link
               href="/dashboard/requests"
-              className={buttonClass("primary")}
+              className={buttonClass("secondary")}
             >
               Ask for dates
             </Link>

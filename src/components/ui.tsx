@@ -5,9 +5,9 @@ import type {
 } from "react";
 
 /**
- * The small set of presentational pieces every authenticated screen uses.
- * Keeping them here means a button looks and behaves the same on the shelf,
- * in a form and in a destructive confirmation.
+ * The small set of presentational pieces every screen uses. They are styled
+ * from the design tokens in `globals.css` (the OpenPencil "LendLoop — Full
+ * app" document), so a palette change lands here once and reaches every page.
  */
 
 export function cx(
@@ -18,15 +18,16 @@ export function cx(
 
 export type Tone = "neutral" | "emerald" | "amber" | "red" | "blue";
 
+/**
+ * Status stamps, not pills: small mono capitals on a tint, matching the
+ * exported `BadgeLabel` / `BadgeStatusStamp` components.
+ */
 const badgeTones: Record<Tone, string> = {
-  neutral:
-    "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
-  emerald:
-    "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300",
-  amber:
-    "bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300",
-  red: "bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300",
-  blue: "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300",
+  neutral: "bg-neutral-tint text-neutral-800",
+  emerald: "bg-positive-tint text-positive-strong",
+  amber: "bg-warn-tint text-warn-strong",
+  red: "bg-danger-tint text-danger-strong",
+  blue: "bg-info-tint text-chart-4",
 };
 
 export function Badge({
@@ -41,7 +42,7 @@ export function Badge({
   return (
     <span
       className={cx(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+        "inline-flex h-[22px] items-center gap-1 rounded-[2px] px-[7px] font-mono text-[9.5px] font-medium tracking-[0.6px] whitespace-nowrap uppercase",
         badgeTones[tone],
         className,
       )}
@@ -91,22 +92,22 @@ type Variant = "primary" | "secondary" | "danger" | "quiet";
 type Size = "sm" | "md";
 
 const buttonBase =
-  "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-60";
 
 const buttonVariants: Record<Variant, string> = {
   primary:
-    "bg-emerald-700 text-white hover:bg-emerald-800 focus-visible:outline-emerald-700 dark:bg-emerald-400 dark:text-emerald-950 dark:hover:bg-emerald-300 dark:focus-visible:outline-emerald-400",
+    "bg-primary text-primary-foreground hover:bg-accent-hover focus-visible:outline-primary",
   secondary:
-    "border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50 focus-visible:outline-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:focus-visible:outline-zinc-100",
+    "border border-input bg-card text-foreground hover:border-rule-dark focus-visible:outline-ring",
   danger:
-    "border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 focus-visible:outline-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-950/70",
+    "border border-danger-tint-strong bg-danger-tint text-danger-strong hover:bg-danger-tint-soft focus-visible:outline-destructive",
   quiet:
-    "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100",
+    "text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-ring",
 };
 
 const buttonSizes: Record<Size, string> = {
-  sm: "px-3 py-1.5 text-xs",
-  md: "px-4 py-2 text-sm",
+  sm: "h-8 px-3 text-[12.5px]",
+  md: "h-[42px] px-4 text-[13.5px]",
 };
 
 export function buttonClass(variant: Variant = "primary", size: Size = "md") {
@@ -144,8 +145,9 @@ export function Button({
   );
 }
 
+/** The design's 46 px field: card ground, 1 px input rule, 3 px radius. */
 export const inputClass =
-  "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 dark:placeholder:text-zinc-500";
+  "h-[46px] w-full rounded-[3px] border border-input bg-card px-[14px] text-sm text-foreground placeholder:text-subtle-foreground focus:border-primary focus:ring-2 focus:ring-primary/15 focus:outline-none disabled:bg-photo-tint disabled:text-subtle-foreground";
 
 export function Input({
   className,
@@ -171,13 +173,15 @@ export function Field({
     <div className={className}>
       <label
         htmlFor={htmlFor}
-        className="block text-xs font-medium text-zinc-700 dark:text-zinc-300"
+        className="mb-[7px] block text-xs font-medium tracking-[0.2px] text-inverse"
       >
         {label}
       </label>
-      <div className="mt-1.5">{children}</div>
+      {children}
       {hint ? (
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{hint}</p>
+        <p className="mt-[7px] text-xs leading-5 text-subtle-foreground">
+          {hint}
+        </p>
       ) : null}
     </div>
   );
@@ -196,21 +200,23 @@ export function PageHeader({
 }) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="min-w-0">
-        <p className="text-xs font-semibold tracking-[0.2em] text-emerald-700 uppercase dark:text-emerald-400">
+      <div className="min-w-0 max-w-[640px]">
+        <p className="font-mono text-[11px] font-medium tracking-[1.5px] text-primary uppercase">
           {eyebrow}
         </p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+        <h1 className="mt-[14px] font-serif text-[30px] leading-[34px] font-semibold tracking-[-0.8px] sm:text-[38px] sm:leading-[42px]">
           {title}
         </h1>
         {description ? (
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+          <p className="mt-[10px] text-[14px] leading-[22px] text-muted-foreground">
             {description}
           </p>
         ) : null}
       </div>
       {actions ? (
-        <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
+        <div className="flex shrink-0 flex-wrap items-center gap-[10px]">
+          {actions}
+        </div>
       ) : null}
     </div>
   );
@@ -232,16 +238,18 @@ export function Section({
   return (
     <section
       className={cx(
-        "overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900",
+        "overflow-hidden rounded-md border border-border bg-card",
         className,
       )}
     >
       {title ? (
-        <header className="flex flex-wrap items-start justify-between gap-3 border-b border-zinc-200 px-4 py-3 sm:px-5 dark:border-zinc-800">
+        <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-5 py-[14px]">
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
+            <h2 className="font-serif text-[19px] leading-6 font-semibold tracking-[-0.3px]">
+              {title}
+            </h2>
             {description ? (
-              <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+              <p className="mt-[3px] text-xs leading-[18px] text-muted-foreground">
                 {description}
               </p>
             ) : null}
@@ -272,16 +280,16 @@ export function EmptyState({
   return (
     <div
       className={cx(
-        "flex flex-col items-start gap-3 rounded-xl border border-dashed border-zinc-300 px-5 py-6 dark:border-zinc-700",
+        "flex flex-col items-start gap-3 rounded-md border border-dashed border-rule-mid px-5 py-6",
         className,
       )}
     >
       <div>
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+        <p className="font-serif text-[17px] font-semibold text-foreground">
           {title}
         </p>
         {body ? (
-          <p className="mt-1 max-w-prose text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 max-w-prose text-sm leading-6 text-muted-foreground">
             {body}
           </p>
         ) : null}
@@ -302,17 +310,17 @@ export function Banner({
 }) {
   const tones = {
     success:
-      "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200",
+      "border-positive-tint-strong bg-positive-tint text-positive-strong",
     error:
-      "border-red-200 bg-red-50 text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200",
-    info: "border-zinc-200 bg-zinc-50 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-300",
+      "border-danger-tint-strong bg-danger-tint text-danger-strong",
+    info: "border-border bg-secondary text-muted-foreground",
   } as const;
 
   return (
     <div
       role={tone === "error" ? "alert" : "status"}
       className={cx(
-        "rounded-lg border px-3 py-2 text-sm leading-6",
+        "rounded-[3px] border px-3 py-2 text-sm leading-6",
         tones[tone],
         className,
       )}
@@ -326,10 +334,7 @@ export function Skeleton({ className }: { className?: string }) {
   return (
     <div
       aria-hidden="true"
-      className={cx(
-        "animate-pulse rounded-lg bg-zinc-200/80 dark:bg-zinc-800",
-        className,
-      )}
+      className={cx("animate-pulse rounded-[3px] bg-muted", className)}
     />
   );
 }
@@ -345,7 +350,7 @@ export function SkeletonList({
   return (
     <div>
       <p className="sr-only">{label}</p>
-      <ul aria-hidden="true" className="divide-y divide-zinc-200 dark:divide-zinc-800">
+      <ul aria-hidden="true" className="divide-y divide-border">
         {Array.from({ length: rows }, (_, index) => (
           <li key={index} className="flex flex-col gap-2 px-4 py-4 sm:px-5">
             <Skeleton className="h-4 w-40 max-w-full" />

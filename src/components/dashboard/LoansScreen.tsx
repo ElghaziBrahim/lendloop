@@ -85,7 +85,7 @@ export function LoansScreen() {
             />
           </div>
         ) : (
-          <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className="divide-y divide-border">
             {lent.map((loan) => (
               <li key={loan._id} className="px-4 py-4 sm:px-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -96,19 +96,19 @@ export function LoansScreen() {
                       </h3>
                       <LoanStatus loan={loan} />
                     </div>
-                    <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                      <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">
                         {loan.borrowerName ?? "A circle member"}
                       </span>{" "}
                       <span className="break-all">({loan.borrowerEmail})</span>
                     </p>
-                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="mt-1 text-xs text-subtle-foreground">
                       {formatRange(loan.startDate, loan.endDate)} · due{" "}
                       {formatDate(loan.dueDate)}
                       {loan.status !== "returned" ? ` · ${dueLabel(loan.dueDate)}` : ""}
                     </p>
                     {loan.returnedAt ? (
-                      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-1 text-xs text-subtle-foreground">
                         Returned {formatTimestamp(loan.returnedAt)}
                       </p>
                     ) : null}
@@ -116,12 +116,12 @@ export function LoansScreen() {
 
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
                     {loan.status === "returned" ? (
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                      <span className="text-xs text-subtle-foreground">
                         Closed
                       </span>
                     ) : confirmReturn === loan._id ? (
                       <>
-                        <span className="text-xs text-zinc-600 dark:text-zinc-300">
+                        <span className="text-xs text-muted-foreground">
                           Is it back?
                         </span>
                         <Button
@@ -164,7 +164,7 @@ export function LoansScreen() {
         description="Only the lender can confirm these are back."
         actions={
           borrowed === undefined ? null : (
-            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <span className="text-xs font-medium text-subtle-foreground">
               {borrowed.length} {borrowed.length === 1 ? "loan" : "loans"}
             </span>
           )
@@ -180,7 +180,7 @@ export function LoansScreen() {
             />
           </div>
         ) : (
-          <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className="divide-y divide-border">
             {borrowed.map((loan) => (
               <li
                 key={loan._id}
@@ -193,18 +193,18 @@ export function LoansScreen() {
                     </span>
                     <LoanStatus loan={loan} />
                   </div>
-                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="mt-1 text-xs text-subtle-foreground">
                     {formatRange(loan.startDate, loan.endDate)} · due{" "}
                     {formatDate(loan.dueDate)}
                     {loan.status !== "returned" ? ` · ${dueLabel(loan.dueDate)}` : ""}
                   </p>
                   {loan.returnedAt ? (
-                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="mt-1 text-xs text-subtle-foreground">
                       Returned {formatTimestamp(loan.returnedAt)}
                     </p>
                   ) : null}
                 </div>
-                <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
+                <span className="shrink-0 text-xs text-subtle-foreground">
                   {loan.status === "returned"
                     ? "The lender closed it"
                     : "Waiting for the lender"}

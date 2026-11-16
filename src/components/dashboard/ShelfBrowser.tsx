@@ -49,7 +49,7 @@ export function ShelfBrowser() {
       title="On the shelf"
       description="Everything the circle is lending right now. Pick a category, then ask for dates."
       actions={
-        <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <span className="font-mono text-[10.5px] tracking-[0.7px] text-muted-foreground uppercase">
           {visible.length} {visible.length === 1 ? "tool" : "tools"}
         </span>
       }
@@ -68,7 +68,7 @@ export function ShelfBrowser() {
         </div>
       ) : (
         <>
-          <div className="flex flex-wrap gap-1.5 border-b border-zinc-200 px-4 py-3 sm:px-5 dark:border-zinc-800">
+          <div className="flex flex-wrap gap-2 border-b border-border px-5 py-[14px]">
             <FilterChip
               label="All tools"
               count={tools.length}
@@ -90,7 +90,7 @@ export function ShelfBrowser() {
             ))}
           </div>
 
-          <ul className="grid gap-px bg-zinc-200 sm:grid-cols-2 lg:grid-cols-3 dark:bg-zinc-800">
+          <ul className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-3">
             {visible.map((tool) => (
               <ShelfCard key={tool._id} tool={tool} />
             ))}
@@ -118,14 +118,16 @@ function FilterChip({
       onClick={onClick}
       aria-pressed={active}
       className={cx(
-        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+        "inline-flex h-[34px] items-center gap-[7px] rounded-[17px] border px-[13px] text-[13px] transition-colors",
         active
-          ? "border-emerald-700 bg-emerald-700 text-white dark:border-emerald-400 dark:bg-emerald-400 dark:text-emerald-950"
-          : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100",
+          ? "border-foreground bg-foreground font-semibold text-background"
+          : "border-rule-mid bg-card font-medium text-muted-foreground hover:border-rule-dark hover:text-foreground",
       )}
     >
       {label}
-      <span className="tabular-nums opacity-70">{count}</span>
+      <span className="font-mono text-[10.5px] tabular-nums opacity-70">
+        {count}
+      </span>
     </button>
   );
 }
@@ -149,48 +151,74 @@ function ShelfCard({ tool }: { tool: ShelfTool }) {
         }
       : { tone: "emerald" as const, text: "Available now" };
 
+  const available = availability.tone === "emerald";
+
   return (
-    <li className="flex min-w-0 flex-col bg-white p-4 sm:p-5 dark:bg-zinc-900">
-      <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
-        <h3 className="min-w-0 text-sm font-semibold tracking-tight break-words">
-          {tool.name}
-        </h3>
-        <Badge tone={availability.tone}>{availability.text}</Badge>
+    <li className="flex min-w-0 flex-col rounded-md border border-border bg-card p-5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="min-w-0 truncate font-mono text-[10px] font-medium tracking-[0.7px] text-muted-foreground uppercase">
+          {tool.category}
+        </span>
+        {tool.ownerIsMe ? (
+          <Badge tone="blue">Your listing</Badge>
+        ) : tool.ownerTrusted ? (
+          <Badge tone="emerald">Trusted</Badge>
+        ) : null}
       </div>
-      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-        {tool.category}
+
+      <h3 className="mt-2 font-serif text-[21px] leading-[26px] font-semibold tracking-[-0.3px] break-words">
+        {tool.name}
+      </h3>
+
+      <p className="mt-2 flex items-center gap-[6px] text-[11.5px] font-semibold">
+        <span
+          aria-hidden="true"
+          className={
+            available
+              ? "block size-[6px] rounded-full bg-chart-1"
+              : "block size-[6px] rounded-full bg-chart-2"
+          }
+        />
+        <span className={available ? "text-positive-strong" : "text-warn-strong"}>
+          {availability.text}
+        </span>
       </p>
-      <p className="mt-3 line-clamp-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+
+      <p className="mt-[10px] line-clamp-2 text-[12.5px] leading-[19px] text-muted-foreground">
         {tool.description ?? "No description yet."}
       </p>
 
-      <div className="mt-3 flex min-w-0 items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-        <span className="min-w-0 truncate">
-          Lent by {tool.ownerName ?? "a circle member"}
+      <div className="my-[14px] h-px bg-muted" />
+
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-[7px] text-xs text-subtle-foreground">
+          <span
+            aria-hidden="true"
+            className="flex size-[22px] shrink-0 items-center justify-center rounded-full bg-accent font-mono text-[9px] font-semibold text-primary uppercase"
+          >
+            {(tool.ownerName ?? "LL").slice(0, 2)}
+          </span>
+          <span className="truncate">
+            Lent by {tool.ownerName ?? "a circle member"}
+          </span>
         </span>
-        {tool.ownerTrusted ? <Badge tone="emerald">Trusted</Badge> : null}
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-2 border-t border-zinc-100 pt-3 dark:border-zinc-800">
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">
-          {tool.ownerIsMe ? "Your listing" : "Dates are inclusive"}
-        </span>
-        {tool.ownerIsMe ? (
-          <Link
-            href="/dashboard/listings"
-            className={buttonClass("secondary", "sm")}
-          >
-            Manage
-          </Link>
-        ) : (
-          <Link
-            href={`/dashboard/requests?tool=${tool._id}`}
-            className={buttonClass("secondary", "sm")}
-          >
-            Request dates
-          </Link>
-        )}
-      </div>
+      {tool.ownerIsMe ? (
+        <Link
+          href="/dashboard/listings"
+          className={buttonClass("secondary", "md") + " mt-[14px] w-full"}
+        >
+          Manage
+        </Link>
+      ) : (
+        <Link
+          href={`/dashboard/requests?tool=${tool._id}`}
+          className={buttonClass("primary", "md") + " mt-[14px] w-full"}
+        >
+          Request dates
+        </Link>
+      )}
     </li>
   );
 }
@@ -199,9 +227,9 @@ function ShelfSkeleton() {
   return (
     <Section title="On the shelf" description="Loading the circle's tools…">
       <p className="sr-only">Loading the shelf…</p>
-      <div className="grid gap-px bg-zinc-200 sm:grid-cols-2 lg:grid-cols-3 dark:bg-zinc-800">
+      <div className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 6 }, (_, index) => (
-          <div key={index} className="bg-white p-5 dark:bg-zinc-900">
+          <div key={index} className="rounded-md border border-border bg-card p-5">
             <Skeleton className="h-4 w-32" />
             <Skeleton className="mt-2 h-3 w-20" />
             <Skeleton className="mt-4 h-3 w-full" />

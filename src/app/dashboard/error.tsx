@@ -24,16 +24,16 @@ export default function DashboardError({
 
   return (
     <div className="max-w-xl">
-      <p className="text-xs font-semibold tracking-[0.2em] text-red-700 uppercase dark:text-red-400">
+      <p className="font-mono text-[11px] font-medium tracking-[1.5px] text-destructive uppercase">
         Something went wrong
       </p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+      <h1 className="mt-[14px] font-serif text-[30px] leading-[34px] font-semibold tracking-[-0.8px] sm:text-[38px] sm:leading-[42px]">
         This page could not load
       </h1>
-      <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm leading-6 text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200">
+      <p className="mt-3 rounded-lg border border-danger-tint-strong bg-danger-tint px-3 py-2 text-sm leading-6 text-danger-strong">
         {errorMessage(error)}
       </p>
-      <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+      <p className="mt-3 text-sm leading-6 text-muted-foreground">
         Nothing was changed. Try again, and if it keeps failing check that the
         Convex deployment is running.
       </p>

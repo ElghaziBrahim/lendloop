@@ -221,7 +221,7 @@ export function ListingsScreen() {
         description="Active listings are visible to everyone signed in."
         actions={
           tools === undefined ? null : (
-            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <span className="text-xs font-medium text-subtle-foreground">
               {tools.length} {tools.length === 1 ? "listing" : "listings"}
             </span>
           )
@@ -242,7 +242,7 @@ export function ListingsScreen() {
             />
           </div>
         ) : (
-          <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className="divide-y divide-border">
             {tools.map((tool) => (
               <li key={tool._id} className="px-4 py-4 sm:px-5">
                 {editingId === tool._id ? (
@@ -329,10 +329,10 @@ export function ListingsScreen() {
                         />
                         <Badge>{tool.category}</Badge>
                       </div>
-                      <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                      <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-muted-foreground">
                         {tool.description ?? "No description."}
                       </p>
-                      <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-2 text-xs text-subtle-foreground">
                         Listed {formatTimestamp(tool.createdAt)}
                         {tool.updatedAt !== tool.createdAt
                           ? ` · updated ${formatTimestamp(tool.updatedAt)}`
@@ -343,7 +343,7 @@ export function ListingsScreen() {
                     <div className="flex shrink-0 flex-wrap items-center gap-2">
                       {confirmId === tool._id ? (
                         <>
-                          <span className="text-xs text-zinc-600 dark:text-zinc-300">
+                          <span className="text-xs text-muted-foreground">
                             Remove from the shelf?
                           </span>
                           <Button
@@ -363,7 +363,7 @@ export function ListingsScreen() {
                           </Button>
                         </>
                       ) : tool.status === "removed" ? (
-                        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                        <span className="text-xs text-subtle-foreground">
                           No actions on a removed listing
                         </span>
                       ) : (
@@ -396,7 +396,7 @@ export function ListingsScreen() {
         )}
       </Section>
 
-      <p className="text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+      <p className="text-xs leading-5 text-subtle-foreground">
         Removing keeps the row for past requests and loans, but drops the tool
         from the shelf. A removed listing cannot be edited.
       </p>

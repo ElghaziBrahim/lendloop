@@ -1,0 +1,783 @@
+{
+ "collection": "Design system",
+ "mode": "Light",
+ "modes": [
+  {
+   "name": "Light"
+  },
+  {
+   "name": "Dark",
+   "condition": ".dark"
+  }
+ ],
+ "primitives": [
+  {
+   "name": "Tone/01",
+   "hex": "#F6F2E9"
+  },
+  {
+   "name": "Tone/02",
+   "hex": "#22201B"
+  },
+  {
+   "name": "Tone/03",
+   "hex": "#FFFDF8"
+  },
+  {
+   "name": "Tone/04",
+   "hex": "#A8451F"
+  },
+  {
+   "name": "Tone/05",
+   "hex": "#FBF7EE"
+  },
+  {
+   "name": "Tone/06",
+   "hex": "#EDE8DC"
+  },
+  {
+   "name": "Tone/07",
+   "hex": "#5E5849"
+  },
+  {
+   "name": "Tone/08",
+   "hex": "#F1E2D5"
+  },
+  {
+   "name": "Tone/09",
+   "hex": "#9B3325"
+  },
+  {
+   "name": "Tone/10",
+   "hex": "#DED7C7"
+  },
+  {
+   "name": "Tone/11",
+   "hex": "#C9C1AE"
+  },
+  {
+   "name": "Tone/12",
+   "hex": "#3F6B4F"
+  },
+  {
+   "name": "Tone/13",
+   "hex": "#87601A"
+  },
+  {
+   "name": "Tone/14",
+   "hex": "#5B4472"
+  },
+  {
+   "name": "Tone/15",
+   "hex": "#4A5560"
+  },
+  {
+   "name": "Tone/16",
+   "hex": "#6B6350"
+  },
+  {
+   "name": "Tone/17",
+   "hex": "#8A8371"
+  },
+  {
+   "name": "Tone/18",
+   "hex": "#3A362C"
+  },
+  {
+   "name": "Tone/19",
+   "hex": "#B0A791"
+  },
+  {
+   "name": "Tone/20",
+   "hex": "#8F3919"
+  },
+  {
+   "name": "Tone/21",
+   "hex": "#8C5A34"
+  },
+  {
+   "name": "Tone/22",
+   "hex": "#33543F"
+  },
+  {
+   "name": "Tone/23",
+   "hex": "#E3EBDD"
+  },
+  {
+   "name": "Tone/24",
+   "hex": "#BFD0B4"
+  },
+  {
+   "name": "Tone/25",
+   "hex": "#6E4C13"
+  },
+  {
+   "name": "Tone/26",
+   "hex": "#F4E8CE"
+  },
+  {
+   "name": "Tone/27",
+   "hex": "#DFC398"
+  },
+  {
+   "name": "Tone/28",
+   "hex": "#E4CCA6"
+  },
+  {
+   "name": "Tone/29",
+   "hex": "#7C2A1E"
+  },
+  {
+   "name": "Tone/30",
+   "hex": "#F2DEDA"
+  },
+  {
+   "name": "Tone/31",
+   "hex": "#E0BCB4"
+  },
+  {
+   "name": "Tone/32",
+   "hex": "#F7E4E0"
+  },
+  {
+   "name": "Tone/33",
+   "hex": "#E9E6DE"
+  },
+  {
+   "name": "Tone/34",
+   "hex": "#EAE3F0"
+  },
+  {
+   "name": "Tone/35",
+   "hex": "#E8E0CF"
+  },
+  {
+   "name": "Tone/36",
+   "hex": "#F3EFE4"
+  },
+  {
+   "name": "Tone/37",
+   "hex": "#DCC9B4"
+  },
+  {
+   "name": "Tone/38",
+   "hex": "#D9A78C"
+  },
+  {
+   "name": "Tone/39",
+   "hex": "#E3C4A8"
+  },
+  {
+   "name": "Tone/40",
+   "hex": "#D5CFC0"
+  },
+  {
+   "name": "Tone/41",
+   "hex": "#D8D1C2"
+  },
+  {
+   "name": "Tone/42",
+   "hex": "#7A7156"
+  },
+  {
+   "name": "Tone/43",
+   "hex": "#C9BFA8"
+  },
+  {
+   "name": "Tone/44",
+   "hex": "#675F4C"
+  },
+  {
+   "name": "Tone/45",
+   "hex": "#5B5648"
+  },
+  {
+   "name": "Tone/46",
+   "hex": "#5F5844"
+  },
+  {
+   "name": "Tone/47",
+   "hex": "#6E6857"
+  },
+  {
+   "name": "Tone/48",
+   "hex": "#454036"
+  },
+  {
+   "name": "Tone/49",
+   "hex": "#4E4839"
+  },
+  {
+   "name": "Tone/50",
+   "hex": "#1B1915"
+  },
+  {
+   "name": "Tone/51",
+   "hex": "#FFFFFF"
+  },
+  {
+   "name": "Tone/52",
+   "hex": "#C7D5BC"
+  },
+  {
+   "name": "Tone/53",
+   "hex": "#EFE9DE"
+  },
+  {
+   "name": "Tone/54",
+   "hex": "#E7DFD0"
+  },
+  {
+   "name": "Tone/55",
+   "hex": "#FBEFE2"
+  },
+  {
+   "name": "Tone/56",
+   "hex": "#A9A294"
+  },
+  {
+   "name": "Tone/57",
+   "hex": "#B0A78F"
+  },
+  {
+   "name": "Tone/58",
+   "hex": "#8C3A18"
+  },
+  {
+   "name": "Tone/59",
+   "hex": "#D5D0C4"
+  }
+ ],
+ "semantics": [
+  {
+   "name": "background",
+   "alias": "Tone/01"
+  },
+  {
+   "name": "foreground",
+   "alias": "Tone/02"
+  },
+  {
+   "name": "card",
+   "alias": "Tone/03"
+  },
+  {
+   "name": "card-foreground",
+   "alias": "Tone/02"
+  },
+  {
+   "name": "popover",
+   "alias": "Tone/03"
+  },
+  {
+   "name": "popover-foreground",
+   "alias": "Tone/02"
+  },
+  {
+   "name": "primary",
+   "alias": "Tone/04"
+  },
+  {
+   "name": "primary-foreground",
+   "alias": "Tone/03"
+  },
+  {
+   "name": "secondary",
+   "alias": "Tone/05"
+  },
+  {
+   "name": "secondary-foreground",
+   "alias": "Tone/02"
+  },
+  {
+   "name": "muted",
+   "alias": "Tone/06"
+  },
+  {
+   "name": "muted-foreground",
+   "alias": "Tone/07"
+  },
+  {
+   "name": "accent",
+   "alias": "Tone/08"
+  },
+  {
+   "name": "accent-foreground",
+   "alias": "Tone/02"
+  },
+  {
+   "name": "destructive",
+   "alias": "Tone/09"
+  },
+  {
+   "name": "destructive-foreground",
+   "alias": "Tone/03"
+  },
+  {
+   "name": "border",
+   "alias": "Tone/10"
+  },
+  {
+   "name": "input",
+   "alias": "Tone/11"
+  },
+  {
+   "name": "ring",
+   "alias": "Tone/04"
+  },
+  {
+   "name": "chart-1",
+   "alias": "Tone/12"
+  },
+  {
+   "name": "chart-2",
+   "alias": "Tone/13"
+  },
+  {
+   "name": "chart-3",
+   "alias": "Tone/09"
+  },
+  {
+   "name": "chart-4",
+   "alias": "Tone/14"
+  },
+  {
+   "name": "chart-5",
+   "alias": "Tone/15"
+  },
+  {
+   "name": "sidebar",
+   "alias": "Tone/05"
+  },
+  {
+   "name": "sidebar-foreground",
+   "alias": "Tone/02"
+  },
+  {
+   "name": "sidebar-primary",
+   "alias": "Tone/04"
+  },
+  {
+   "name": "sidebar-primary-foreground",
+   "alias": "Tone/03"
+  },
+  {
+   "name": "sidebar-accent",
+   "alias": "Tone/08"
+  },
+  {
+   "name": "sidebar-accent-foreground",
+   "alias": "Tone/02"
+  },
+  {
+   "name": "sidebar-border",
+   "alias": "Tone/10"
+  },
+  {
+   "name": "sidebar-ring",
+   "alias": "Tone/04"
+  },
+  {
+   "name": "subtle-foreground",
+   "alias": "Tone/16"
+  },
+  {
+   "name": "rule-soft",
+   "alias": "Tone/17"
+  },
+  {
+   "name": "inverse",
+   "alias": "Tone/18"
+  },
+  {
+   "name": "inverse-foreground",
+   "alias": "Tone/01"
+  },
+  {
+   "name": "inverse-muted",
+   "alias": "Tone/19"
+  },
+  {
+   "name": "accent-hover",
+   "alias": "Tone/20"
+  },
+  {
+   "name": "accent-deep",
+   "alias": "Tone/21"
+  },
+  {
+   "name": "positive",
+   "alias": "Tone/12"
+  },
+  {
+   "name": "positive-strong",
+   "alias": "Tone/22"
+  },
+  {
+   "name": "positive-tint",
+   "alias": "Tone/23"
+  },
+  {
+   "name": "positive-tint-strong",
+   "alias": "Tone/24"
+  },
+  {
+   "name": "warn",
+   "alias": "Tone/13"
+  },
+  {
+   "name": "warn-strong",
+   "alias": "Tone/25"
+  },
+  {
+   "name": "warn-tint",
+   "alias": "Tone/26"
+  },
+  {
+   "name": "warn-tint-strong",
+   "alias": "Tone/27"
+  },
+  {
+   "name": "warn-tint-soft",
+   "alias": "Tone/28"
+  },
+  {
+   "name": "danger-strong",
+   "alias": "Tone/29"
+  },
+  {
+   "name": "danger-tint",
+   "alias": "Tone/30"
+  },
+  {
+   "name": "danger-tint-strong",
+   "alias": "Tone/31"
+  },
+  {
+   "name": "danger-tint-soft",
+   "alias": "Tone/32"
+  },
+  {
+   "name": "neutral",
+   "alias": "Tone/15"
+  },
+  {
+   "name": "neutral-tint",
+   "alias": "Tone/33"
+  },
+  {
+   "name": "info",
+   "alias": "Tone/14"
+  },
+  {
+   "name": "info-tint",
+   "alias": "Tone/34"
+  },
+  {
+   "name": "photo",
+   "alias": "Tone/35"
+  },
+  {
+   "name": "photo-tint",
+   "alias": "Tone/36"
+  },
+  {
+   "name": "photo-warm",
+   "alias": "Tone/37"
+  },
+  {
+   "name": "photo-peach",
+   "alias": "Tone/38"
+  },
+  {
+   "name": "photo-tan",
+   "alias": "Tone/39"
+  },
+  {
+   "name": "rule-mid",
+   "alias": "Tone/40"
+  },
+  {
+   "name": "rule-faint",
+   "alias": "Tone/41"
+  },
+  {
+   "name": "rule-dark",
+   "alias": "Tone/42"
+  },
+  {
+   "name": "rule-warm",
+   "alias": "Tone/43"
+  },
+  {
+   "name": "neutral-800",
+   "alias": "Tone/44"
+  },
+  {
+   "name": "neutral-700",
+   "alias": "Tone/45"
+  },
+  {
+   "name": "neutral-750",
+   "alias": "Tone/46"
+  },
+  {
+   "name": "neutral-600",
+   "alias": "Tone/47"
+  },
+  {
+   "name": "neutral-900",
+   "alias": "Tone/48"
+  },
+  {
+   "name": "neutral-850",
+   "alias": "Tone/49"
+  },
+  {
+   "name": "ink-950",
+   "alias": "Tone/50"
+  },
+  {
+   "name": "white-pure",
+   "alias": "Tone/51"
+  },
+  {
+   "name": "sage-soft",
+   "alias": "Tone/52"
+  },
+  {
+   "name": "sand-50",
+   "alias": "Tone/53"
+  },
+  {
+   "name": "sand-100",
+   "alias": "Tone/54"
+  },
+  {
+   "name": "sand-200",
+   "alias": "Tone/55"
+  },
+  {
+   "name": "stone-300",
+   "alias": "Tone/56"
+  },
+  {
+   "name": "inverse-muted-quiet",
+   "alias": "Tone/57"
+  },
+  {
+   "name": "accent-hover-strong",
+   "alias": "Tone/58"
+  },
+  {
+   "name": "rule-mid-alt",
+   "alias": "Tone/59"
+  }
+ ],
+ "bind": {
+  "fills": {
+   "#f6f2e9": {
+    "default": "background",
+    "TEXT": "inverse-foreground"
+   },
+   "#22201b": "foreground",
+   "#fffdf8": {
+    "default": "card",
+    "TEXT": "primary-foreground"
+   },
+   "#a8451f": "primary",
+   "#fbf7ee": "secondary",
+   "#ede8dc": "muted",
+   "#5e5849": "muted-foreground",
+   "#f1e2d5": "accent",
+   "#9b3325": "destructive",
+   "#ded7c7": "border",
+   "#c9c1ae": "input",
+   "#3f6b4f": "chart-1",
+   "#87601a": "chart-2",
+   "#5b4472": "chart-4",
+   "#4a5560": "chart-5",
+   "#6b6350": "subtle-foreground",
+   "#8a8371": "rule-soft",
+   "#3a362c": "inverse",
+   "#b0a791": "inverse-muted",
+   "#8f3919": "accent-hover",
+   "#8c5a34": "accent-deep",
+   "#33543f": "positive-strong",
+   "#e3ebdd": "positive-tint",
+   "#bfd0b4": "positive-tint-strong",
+   "#6e4c13": "warn-strong",
+   "#f4e8ce": "warn-tint",
+   "#dfc398": "warn-tint-strong",
+   "#e4cca6": "warn-tint-soft",
+   "#7c2a1e": "danger-strong",
+   "#f2deda": "danger-tint",
+   "#e0bcb4": "danger-tint-strong",
+   "#f7e4e0": "danger-tint-soft",
+   "#e9e6de": "neutral-tint",
+   "#eae3f0": "info-tint",
+   "#e8e0cf": "photo",
+   "#f3efe4": "photo-tint",
+   "#dcc9b4": "photo-warm",
+   "#d9a78c": "photo-peach",
+   "#e3c4a8": "photo-tan",
+   "#d5cfc0": "rule-mid",
+   "#d8d1c2": "rule-faint",
+   "#7a7156": "rule-dark",
+   "#c9bfa8": "rule-warm",
+   "#675f4c": "neutral-800",
+   "#5b5648": "neutral-700",
+   "#5f5844": "neutral-750",
+   "#6e6857": "neutral-600",
+   "#454036": "neutral-900",
+   "#4e4839": "neutral-850",
+   "#1b1915": "ink-950",
+   "#ffffff": "white-pure",
+   "#c7d5bc": "sage-soft",
+   "#efe9de": "sand-50",
+   "#e7dfd0": "sand-100",
+   "#fbefe2": "sand-200",
+   "#a9a294": "stone-300",
+   "#b0a78f": "inverse-muted-quiet",
+   "#8c3a18": "accent-hover-strong",
+   "#d5d0c4": "rule-mid-alt"
+  },
+  "strokes": {
+   "#f6f2e9": "background",
+   "#22201b": "foreground",
+   "#fffdf8": "card",
+   "#a8451f": "primary",
+   "#fbf7ee": "secondary",
+   "#ede8dc": "muted",
+   "#5e5849": "muted-foreground",
+   "#f1e2d5": "accent",
+   "#9b3325": "destructive",
+   "#ded7c7": "border",
+   "#c9c1ae": "input",
+   "#3f6b4f": "chart-1",
+   "#87601a": "chart-2",
+   "#5b4472": "chart-4",
+   "#4a5560": "chart-5",
+   "#6b6350": "subtle-foreground",
+   "#8a8371": "rule-soft",
+   "#3a362c": "inverse",
+   "#b0a791": "inverse-muted",
+   "#8f3919": "accent-hover",
+   "#8c5a34": "accent-deep",
+   "#33543f": "positive-strong",
+   "#e3ebdd": "positive-tint",
+   "#bfd0b4": "positive-tint-strong",
+   "#6e4c13": "warn-strong",
+   "#f4e8ce": "warn-tint",
+   "#dfc398": "warn-tint-strong",
+   "#e4cca6": "warn-tint-soft",
+   "#7c2a1e": "danger-strong",
+   "#f2deda": "danger-tint",
+   "#e0bcb4": "danger-tint-strong",
+   "#f7e4e0": "danger-tint-soft",
+   "#e9e6de": "neutral-tint",
+   "#eae3f0": "info-tint",
+   "#e8e0cf": "photo",
+   "#f3efe4": "photo-tint",
+   "#dcc9b4": "photo-warm",
+   "#d9a78c": "photo-peach",
+   "#e3c4a8": "photo-tan",
+   "#d5cfc0": "rule-mid",
+   "#d8d1c2": "rule-faint",
+   "#7a7156": "rule-dark",
+   "#c9bfa8": "rule-warm",
+   "#675f4c": "neutral-800",
+   "#5b5648": "neutral-700",
+   "#5f5844": "neutral-750",
+   "#6e6857": "neutral-600",
+   "#454036": "neutral-900",
+   "#4e4839": "neutral-850",
+   "#1b1915": "ink-950",
+   "#ffffff": "white-pure",
+   "#c7d5bc": "sage-soft",
+   "#efe9de": "sand-50",
+   "#e7dfd0": "sand-100",
+   "#fbefe2": "sand-200",
+   "#a9a294": "stone-300",
+   "#b0a78f": "inverse-muted-quiet",
+   "#8c3a18": "accent-hover-strong",
+   "#d5d0c4": "rule-mid-alt"
+  }
+ },
+ "dark": {
+  "background": "#17150F",
+  "foreground": "#F2EDE1",
+  "card": "#1F1C15",
+  "card-foreground": "#F2EDE1",
+  "popover": "#1F1C15",
+  "popover-foreground": "#F2EDE1",
+  "primary": "#D9663A",
+  "primary-foreground": "#17150F",
+  "secondary": "#262218",
+  "secondary-foreground": "#F2EDE1",
+  "muted": "#262218",
+  "muted-foreground": "#B9B09A",
+  "accent": "#2E281C",
+  "accent-foreground": "#F2EDE1",
+  "destructive": "#E0715F",
+  "destructive-foreground": "#17150F",
+  "border": "#3A342A",
+  "input": "#4A4335",
+  "ring": "#D9663A",
+  "chart-1": "#7FB08F",
+  "chart-2": "#D9A94E",
+  "chart-3": "#E0715F",
+  "chart-4": "#A98BC4",
+  "chart-5": "#9AA3AC",
+  "sidebar": "#1B1811",
+  "sidebar-foreground": "#F2EDE1",
+  "sidebar-primary": "#D9663A",
+  "sidebar-primary-foreground": "#17150F",
+  "sidebar-accent": "#2E281C",
+  "sidebar-accent-foreground": "#F2EDE1",
+  "sidebar-border": "#3A342A",
+  "sidebar-ring": "#D9663A",
+  "subtle-foreground": "#A9A18C",
+  "rule-soft": "#6E6552",
+  "inverse": "#F2EDE1",
+  "inverse-foreground": "#17150F",
+  "inverse-muted": "#9A927E",
+  "accent-hover": "#B4552C",
+  "accent-deep": "#B4552C",
+  "positive": "#7FB08F",
+  "positive-strong": "#9FC7AB",
+  "positive-tint": "#1E2A20",
+  "positive-tint-strong": "#2C3F31",
+  "warn": "#D9A94E",
+  "warn-strong": "#E8C47F",
+  "warn-tint": "#2A2314",
+  "warn-tint-strong": "#3A3018",
+  "warn-tint-soft": "#3A3018",
+  "danger-strong": "#E0715F",
+  "danger-tint": "#2C1A16",
+  "danger-tint-strong": "#3E2620",
+  "danger-tint-soft": "#241512",
+  "neutral": "#9AA3AC",
+  "neutral-tint": "#23262A",
+  "info": "#A98BC4",
+  "info-tint": "#241E2C",
+  "photo": "#2A251B",
+  "photo-tint": "#1F1C15",
+  "photo-warm": "#3A342A",
+  "photo-peach": "#4A342A",
+  "photo-tan": "#42342A",
+  "rule-mid": "#3A342A",
+  "rule-faint": "#2E281E",
+  "rule-dark": "#6E6552",
+  "rule-warm": "#3A342A",
+  "inverse-muted-quiet": "#9A927E",
+  "accent-hover-strong": "#B4552C",
+  "rule-mid-alt": "#3A342A"
+ },
+ "meta": {
+  "roles": 32,
+  "variants": 46,
+  "colours": 56,
+  "folds": {}
+ }
+}

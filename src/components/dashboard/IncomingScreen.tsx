@@ -99,7 +99,7 @@ export function IncomingScreen() {
             />
           </div>
         ) : (
-          <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className="divide-y divide-border">
             {pending.map((request) => (
               <li key={request._id} className="px-4 py-4 sm:px-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -110,8 +110,8 @@ export function IncomingScreen() {
                       </h3>
                       <StatusBadge status={request.status} />
                     </div>
-                    <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                      <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">
                         {request.requesterName ?? "A circle member"}
                       </span>{" "}
                       <span className="break-all">
@@ -120,11 +120,11 @@ export function IncomingScreen() {
                       asked for {formatRange(request.startDate, request.endDate)}.
                     </p>
                     {request.message ? (
-                      <p className="mt-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm leading-6 break-words text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-300">
+                      <p className="mt-2 rounded-lg border border-border bg-secondary px-3 py-2 text-sm leading-6 break-words text-foreground">
                         “{request.message}”
                       </p>
                     ) : null}
-                    <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="mt-2 text-xs text-subtle-foreground">
                       Asked {formatTimestamp(request.createdAt)} ·{" "}
                       {request.toolCategory}
                     </p>
@@ -133,7 +133,7 @@ export function IncomingScreen() {
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
                     {confirmDecline === request._id ? (
                       <>
-                        <span className="text-xs text-zinc-600 dark:text-zinc-300">
+                        <span className="text-xs text-muted-foreground">
                           Decline this ask?
                         </span>
                         <Button
@@ -188,7 +188,7 @@ export function IncomingScreen() {
         description="What you have already approved or declined."
         actions={
           incoming === undefined ? null : (
-            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <span className="text-xs font-medium text-subtle-foreground">
               {decided.length} {decided.length === 1 ? "request" : "requests"}
             </span>
           )
@@ -204,7 +204,7 @@ export function IncomingScreen() {
             />
           </div>
         ) : (
-          <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className="divide-y divide-border">
             {decided.map((request) => (
               <li
                 key={request._id}
@@ -217,7 +217,7 @@ export function IncomingScreen() {
                     </span>
                     <StatusBadge status={request.status} />
                   </div>
-                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="mt-1 text-xs text-subtle-foreground">
                     {request.requesterName ?? "A circle member"} ·{" "}
                     {formatRange(request.startDate, request.endDate)}
                     {request.decidedAt
@@ -225,7 +225,7 @@ export function IncomingScreen() {
                       : ""}
                   </p>
                 </div>
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                <span className="text-xs text-subtle-foreground">
                   {request.status === "approved"
                     ? "Loan created"
                     : "No loan created"}

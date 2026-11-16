@@ -54,7 +54,7 @@ export function OverviewStats() {
     return (
       <div>
         <p className="sr-only">Loading your counts…</p>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {cards.map((card) => (
             <Skeleton key={card.key} className="h-[104px]" />
           ))}
@@ -71,24 +71,31 @@ export function OverviewStats() {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      {cards.map((card) => (
-        <Link
-          key={card.key}
-          href={card.href}
-          className="group rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:border-emerald-600/60 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-emerald-400/60"
-        >
-          <p className="text-xs leading-5 font-medium text-zinc-500 dark:text-zinc-400">
-            {card.label}
-          </p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
-            {values[card.key]}
-          </p>
-          <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-            {card.hint}
-          </p>
-        </Link>
-      ))}
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      {cards.map((card) => {
+        const waiting = card.key === "incoming" && values.incoming > 0;
+        return (
+          <Link
+            key={card.key}
+            href={card.href}
+            className={
+              waiting
+                ? "group rounded-md border border-photo-warm bg-sand-200 p-5 transition-colors hover:border-rule-dark"
+                : "group rounded-md border border-border bg-card p-5 transition-colors hover:border-rule-dark"
+            }
+          >
+            <p className="font-mono text-[10.5px] leading-4 font-medium tracking-[0.7px] text-muted-foreground uppercase">
+              {card.label}
+            </p>
+            <p className="mt-[14px] font-serif text-[32px] leading-9 font-semibold tracking-[-0.8px] tabular-nums">
+              {values[card.key]}
+            </p>
+            <p className="mt-[6px] text-xs leading-[18px] text-subtle-foreground">
+              {card.hint}
+            </p>
+          </Link>
+        );
+      })}
     </div>
   );
 }

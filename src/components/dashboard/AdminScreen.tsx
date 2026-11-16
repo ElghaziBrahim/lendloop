@@ -110,7 +110,7 @@ function AdminPanels() {
         description="Removed listings stay here so old loans keep a resolvable tool."
         actions={
           tools === undefined ? null : (
-            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <span className="text-xs font-medium text-subtle-foreground">
               {tools.length} {tools.length === 1 ? "listing" : "listings"}
             </span>
           )
@@ -123,7 +123,7 @@ function AdminPanels() {
             <EmptyState title="No listings exist" body="No one has put a tool on the shelf." />
           </div>
         ) : (
-          <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className="divide-y divide-border">
             {tools.map((tool) => (
               <li
                 key={tool._id}
@@ -140,7 +140,7 @@ function AdminPanels() {
                     />
                     <Badge>{tool.category}</Badge>
                   </div>
-                  <p className="mt-1 text-xs break-all text-zinc-500 dark:text-zinc-400">
+                  <p className="mt-1 text-xs break-all text-subtle-foreground">
                     {tool.ownerName ?? "Unknown owner"} · {tool.ownerEmail} ·
                     listed {formatTimestamp(tool.createdAt)}
                   </p>
@@ -149,7 +149,7 @@ function AdminPanels() {
                 <div className="flex shrink-0 flex-wrap items-center gap-2">
                   {confirmRemove === tool._id ? (
                     <>
-                      <span className="text-xs text-zinc-600 dark:text-zinc-300">
+                      <span className="text-xs text-muted-foreground">
                         Remove it?
                       </span>
                       <Button
@@ -180,7 +180,7 @@ function AdminPanels() {
                       Remove
                     </Button>
                   ) : (
-                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <span className="text-xs text-subtle-foreground">
                       Already removed
                     </span>
                   )}
@@ -196,7 +196,7 @@ function AdminPanels() {
         description="Read-only here: the lender closes a loan from the Loans page."
         actions={
           loans === undefined ? null : (
-            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <span className="text-xs font-medium text-subtle-foreground">
               {loans.length} {loans.length === 1 ? "loan" : "loans"}
             </span>
           )
@@ -209,7 +209,7 @@ function AdminPanels() {
             <EmptyState title="No loans yet" body="An approved request creates the first one." />
           </div>
         ) : (
-          <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className="divide-y divide-border">
             {loans.map((loan) => (
               <li key={loan._id} className="px-4 py-3 sm:px-5">
                 <div className="flex flex-wrap items-center gap-2">
@@ -227,12 +227,12 @@ function AdminPanels() {
                     }
                   />
                 </div>
-                <p className="mt-1 text-xs break-all text-zinc-500 dark:text-zinc-400">
+                <p className="mt-1 text-xs break-all text-subtle-foreground">
                   {loan.borrowerName ?? "Unknown borrower"} ({loan.borrowerEmail})
                   {" ← "}
                   {loan.ownerName ?? "Unknown owner"} ({loan.ownerEmail})
                 </p>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="mt-1 text-xs text-subtle-foreground">
                   {formatRange(loan.startDate, loan.endDate)} · due{" "}
                   {formatDate(loan.dueDate)}
                   {loan.status !== "returned" ? ` · ${dueLabel(loan.dueDate)}` : ""}
@@ -251,7 +251,7 @@ function AdminPanels() {
         description="Trusted lenders carry a badge on the shelf. Roles are read from the database on every call."
         actions={
           users === undefined ? null : (
-            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <span className="text-xs font-medium text-subtle-foreground">
               {users.length} {users.length === 1 ? "account" : "accounts"}
             </span>
           )
@@ -264,7 +264,7 @@ function AdminPanels() {
             <EmptyState title="No accounts" body="The first sign-in creates a row here." />
           </div>
         ) : (
-          <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className="divide-y divide-border">
             {users.map((account) => (
               <li
                 key={account._id}
@@ -282,7 +282,7 @@ function AdminPanels() {
                       <Badge tone="emerald">Trusted lender</Badge>
                     ) : null}
                   </div>
-                  <p className="mt-1 text-xs break-all text-zinc-500 dark:text-zinc-400">
+                  <p className="mt-1 text-xs break-all text-subtle-foreground">
                     {account.email} · joined {formatTimestamp(account.createdAt)}
                   </p>
                 </div>
@@ -323,7 +323,7 @@ function AutomationFeed() {
       description="Every signed call between Convex and n8n, newest first. A delivered row means the workflow accepted the request; a failed row carries the error."
       actions={
         events === undefined ? null : (
-          <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <span className="text-xs font-medium text-subtle-foreground">
             {events.length} {events.length === 1 ? "event" : "events"}
           </span>
         )
@@ -339,7 +339,7 @@ function AutomationFeed() {
           />
         </div>
       ) : (
-        <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+        <ul className="divide-y divide-border">
           {events.map((event) => (
             <li
               key={event._id}
@@ -351,24 +351,24 @@ function AutomationFeed() {
                     {event.kind}
                   </span>
                   {event.workflow ? (
-                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <span className="text-xs text-subtle-foreground">
                       {event.workflow}
                     </span>
                   ) : null}
                   <Badge tone={event.status === "delivered" ? "emerald" : "red"}>
                     {event.status}
                   </Badge>
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <span className="text-xs text-subtle-foreground">
                     {event.direction}
                   </span>
                 </div>
                 {event.lastError ? (
-                  <p className="mt-1 text-xs break-words text-red-600 dark:text-red-400">
+                  <p className="mt-1 text-xs break-words text-destructive">
                     {event.lastError}
                   </p>
                 ) : null}
               </div>
-              <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
+              <span className="shrink-0 text-xs text-subtle-foreground">
                 {formatTimestamp(event.createdAt)}
               </span>
             </li>

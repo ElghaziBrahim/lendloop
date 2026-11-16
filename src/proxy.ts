@@ -1,5 +1,5 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 /**
  * Clerk's middleware, now called Proxy in Next.js 16.
@@ -22,6 +22,54 @@ import { NextResponse } from "next/server";
  * the proxy is the optimistic one, so neither is dropped.
  */
 
+const HOST = /^(?:\[[0-9a-f:.]+\]|[a-z0-9.-]+)(?::\d{1,5})?$/i;
+const PROTOCOL = /^https?$/;
+
+/** The first value of a comma-separated proxy header, trimmed. */
+function firstValue(value: string | null) {
+  return value?.split(",")[0]?.trim() ?? "";
+}
+
+/**
+ * The origin the visitor actually used.
+ *
+ * `request.url` carries the address `next start` listens on, not the address
+ * in the browser: behind cloudflared with `--hostname ::` it resolves to
+ * `https://[::]:3000`. A redirect built from that origin sends Clerk back to
+ * an address the visitor cannot reach, so the origin comes from the proxy
+ * headers instead, with `Host` for a proxy that sets no forwarded host and
+ * the request's own origin as the last resort. Both values are checked
+ * against the forms this app serves before they reach a header.
+ */
+export function requestBase(
+  request: Pick<NextRequest, "headers" | "url">,
+): URL {
+  const requestUrl = new URL(request.url);
+  const host =
+    firstValue(request.headers.get("x-forwarded-host")) ||
+    firstValue(request.headers.get("host")) ||
+    requestUrl.host;
+  const protocol =
+    firstValue(request.headers.get("x-forwarded-proto")) ||
+    requestUrl.protocol.replace(":", "");
+
+  return new URL(
+    `${PROTOCOL.test(protocol) ? protocol : requestUrl.protocol.replace(":", "")}://${HOST.test(host) ? host : requestUrl.host}`,
+  );
+}
+
+/** `/sign-in?redirect_url=…`, returning the visitor to the page they asked for. */
+export function signInRedirect(request: NextRequest) {
+  const base = requestBase(request);
+  const signIn = new URL("/sign-in", base);
+  const returnTo = new URL(
+    `${request.nextUrl.pathname}${request.nextUrl.search}`,
+    base,
+  );
+  signIn.searchParams.set("redirect_url", returnTo.toString());
+  return NextResponse.redirect(signIn);
+}
+
 function isDashboard(pathname: string) {
   return pathname === "/dashboard" || pathname.startsWith("/dashboard/");
 }
@@ -32,15 +80,13 @@ export default clerkMiddleware(async (auth, request) => {
   if (isDashboard(pathname)) {
     const { userId } = await auth();
     if (!userId) {
-      const signIn = new URL("/sign-in", request.url);
-      signIn.searchParams.set("redirect_url", request.url);
-      return NextResponse.redirect(signIn);
+      return signInRedirect(request);
     }
     return;
   }
 
   if (pathname === "/" && (await auth()).userId) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL("/dashboard", requestBase(request)));
   }
 });
 

@@ -67,7 +67,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         <h1 className="text-xl font-semibold tracking-tight">
           Connecting your session
         </h1>
-        <p className="max-w-md text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+        <p className="max-w-md text-sm leading-6 text-muted-foreground">
           The data server has not accepted your Clerk token yet. Reload to
           connect again.
         </p>
@@ -88,7 +88,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         <h1 className="text-xl font-semibold tracking-tight">
           Setting up your account
         </h1>
-        <p className="max-w-md text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+        <p className="max-w-md text-sm leading-6 text-muted-foreground">
           {syncError}
         </p>
         <Button
@@ -112,32 +112,26 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       : navigation;
 
   return (
-    <div className="flex min-h-svh flex-col bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
-      <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/95">
-        <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
-          <div className="flex h-14 items-center justify-between gap-3">
-            <Link
-              href="/dashboard"
-              className="text-base font-semibold tracking-tight"
-            >
-              Lend
-              <span className="text-emerald-700 dark:text-emerald-400">
-                Loop
-              </span>
-            </Link>
+    <div className="flex min-h-svh flex-col bg-background text-foreground">
+      <header className="sticky top-0 z-20 border-b border-border bg-card">
+        <div className="mx-auto flex h-[68px] w-full max-w-[1440px] items-center gap-8 px-4 sm:px-6 lg:px-8">
+          <Link
+            href="/dashboard"
+            className="flex shrink-0 items-center gap-[9px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+          >
+            <span
+              aria-hidden="true"
+              className="block size-[22px] rounded-full bg-foreground"
+            />
+            <span className="font-serif text-lg font-semibold tracking-[-0.2px]">
+              LendLoop
+            </span>
+          </Link>
 
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="hidden max-w-[16rem] truncate text-xs text-zinc-500 sm:block dark:text-zinc-400">
-                {user.name ?? user.email}
-              </span>
-              {user.role === "admin" ? (
-                <Badge tone="emerald">Admin</Badge>
-              ) : null}
-              <UserButton />
-            </div>
-          </div>
-
-          <nav aria-label="Dashboard" className="flex flex-wrap gap-1 pb-2">
+          <nav
+            aria-label="Dashboard"
+            className="ll-scroll flex min-w-0 flex-1 items-center gap-[2px] overflow-x-auto"
+          >
             {items.map((item) => {
               const active = isActive(
                 pathname,
@@ -153,20 +147,20 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={cx(
-                    "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                    "inline-flex shrink-0 items-center gap-[7px] rounded-[3px] px-3 py-2 text-[13px] whitespace-nowrap transition-colors",
                     active
-                      ? "bg-emerald-700 text-white dark:bg-emerald-400 dark:text-emerald-950"
-                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100",
+                      ? "bg-accent font-semibold text-primary"
+                      : "font-medium text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {item.label}
                   {showCount ? (
                     <span
                       className={cx(
-                        "inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-xs leading-5 font-semibold",
+                        "inline-flex size-[18px] items-center justify-center rounded-full font-mono text-[10px] font-semibold",
                         active
-                          ? "bg-white/20 text-white dark:bg-emerald-950/20 dark:text-emerald-950"
-                          : "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300",
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-primary text-primary-foreground",
                       )}
                     >
                       {pendingIncoming}
@@ -176,43 +170,39 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               );
             })}
           </nav>
+
+          <div className="flex shrink-0 items-center gap-[10px]">
+            <span className="hidden max-w-[14rem] truncate font-mono text-[10.5px] tracking-[0.8px] text-muted-foreground uppercase sm:block">
+              {user.name ?? user.email}
+            </span>
+            {user.role === "admin" ? <Badge tone="emerald">Admin</Badge> : null}
+            <UserButton />
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+      <main className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         {children}
       </main>
-
-      <footer className="border-t border-zinc-200 dark:border-zinc-800">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-1 px-4 py-6 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 dark:text-zinc-400">
-          <p className="truncate">
-            Signed in as {user.name ?? user.email}
-            {user.trustedLender ? " · Trusted lender" : ""}
-          </p>
-          <p>LendLoop · Next.js · Clerk · Convex</p>
-        </div>
-      </footer>
     </div>
   );
 }
 
 function ShellSkeleton() {
   return (
-    <div className="flex min-h-svh flex-col bg-zinc-50 dark:bg-zinc-950">
-      <div className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
-          <div className="flex h-14 items-center justify-between">
-            <Skeleton className="h-5 w-24" />
-            <Skeleton className="size-7 rounded-full" />
-          </div>
-          <div className="flex gap-1 pb-2">
+    <div className="flex min-h-svh flex-col bg-background">
+      <div className="border-b border-border bg-card">
+        <div className="mx-auto flex h-[68px] w-full max-w-[1440px] items-center gap-8 px-4 sm:px-6 lg:px-8">
+          <Skeleton className="h-5 w-24" />
+          <div className="flex flex-1 gap-1">
             {Array.from({ length: 5 }, (_, index) => (
               <Skeleton key={index} className="h-7 w-20" />
             ))}
           </div>
+          <Skeleton className="size-7 rounded-full" />
         </div>
       </div>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+      <main className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         <p className="sr-only">Loading your dashboard…</p>
         <Skeleton className="h-3 w-24" />
         <Skeleton className="mt-3 h-8 w-64 max-w-full" />
