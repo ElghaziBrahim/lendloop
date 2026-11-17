@@ -1,9 +1,11 @@
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { connection } from "next/server";
+import { BrandMark } from "@/components/BrandMark";
+import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 
 /**
- * The design's public header: 76 px, cream ground, a solid 26 px mark, three
+ * The design's public header: 76 px, cream ground, a 26 px brand mark, three
  * semibold links and one dark pill. It is static, not sticky.
  */
 
@@ -24,15 +26,12 @@ export async function SiteHeader() {
 
   return (
     <header className="border-b border-border bg-background">
-      <div className="ll-container flex h-[76px] items-center gap-6 lg:gap-[52px]">
+      <div className="ll-container flex h-[76px] items-center gap-3 sm:gap-6 md:gap-3 lg:gap-[52px]">
         <Link
           href="/"
           className="flex shrink-0 items-center gap-[10px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
         >
-          <span
-            aria-hidden="true"
-            className="block size-[26px] rounded-full bg-foreground"
-          />
+          <BrandMark className="size-[26px]" />
           <span className="font-serif text-[21px] font-semibold tracking-[-0.3px] whitespace-nowrap">
             LendLoop
           </span>
@@ -40,7 +39,7 @@ export async function SiteHeader() {
 
         <nav
           aria-label="Main"
-          className="hidden items-center gap-[34px] md:flex"
+          className="hidden items-center gap-5 md:flex lg:gap-[34px]"
         >
           {links.map((link) => (
             <Link
@@ -53,12 +52,15 @@ export async function SiteHeader() {
           ))}
         </nav>
 
-        <Link
-          href={cta.href}
-          className="ml-auto inline-flex h-[42px] items-center rounded-sm bg-foreground px-5 text-sm font-semibold whitespace-nowrap text-inverse-foreground transition-colors hover:bg-inverse focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-        >
-          {cta.label}
-        </Link>
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <ThemeSwitcher />
+          <Link
+            href={cta.href}
+            className="inline-flex h-[42px] items-center rounded-sm bg-foreground px-4 text-sm font-semibold whitespace-nowrap text-inverse-foreground transition-colors hover:bg-inverse focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:px-5"
+          >
+            {cta.label}
+          </Link>
+        </div>
       </div>
     </header>
   );

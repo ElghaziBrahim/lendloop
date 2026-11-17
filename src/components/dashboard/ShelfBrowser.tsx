@@ -194,7 +194,7 @@ function ShelfCard({ tool }: { tool: ShelfTool }) {
         <span className="flex min-w-0 items-center gap-[7px] text-xs text-subtle-foreground">
           <span
             aria-hidden="true"
-            className="flex size-[22px] shrink-0 items-center justify-center rounded-full bg-accent font-mono text-[9px] font-semibold text-primary uppercase"
+            className="flex size-[22px] shrink-0 items-center justify-center rounded-full bg-accent font-mono text-[9px] font-semibold text-primary uppercase dark:text-foreground"
           >
             {(tool.ownerName ?? "LL").slice(0, 2)}
           </span>

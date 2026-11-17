@@ -17,7 +17,7 @@ const points = [
 
 export function WhyBand() {
   return (
-    <section id="why" className="scroll-mt-8 bg-sand-200">
+    <section id="why" className="scroll-mt-8 bg-sand-200 dark:bg-card">
       <div className="ll-container grid items-center gap-12 py-20 lg:grid-cols-[560px_minmax(0,1fr)] lg:gap-24 lg:py-26">
         <div className="border border-rule-warm bg-photo p-[18px]">
           <div className="relative aspect-[4/3] w-full overflow-hidden bg-photo-tint lg:aspect-[14/15]">

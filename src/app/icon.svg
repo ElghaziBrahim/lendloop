@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!--
+    LendLoop app icon: the same two interlocking rings as BrandMark, scaled
+    1.25x and set on a dark rounded tile so it reads on light and dark browser
+    chrome. The rust ring carries the same gap at the upper crossing.
+  -->
+  <rect width="32" height="32" rx="7" fill="#22201b"/>
+  <circle cx="12.25" cy="16" r="8.125" fill="none" stroke="#f6f2e9" stroke-width="2.5"/>
+  <circle
+    cx="19.75"
+    cy="16"
+    r="8.125"
+    fill="none"
+    stroke="#a8451f"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-dasharray="44.301 6.75"
+    stroke-dashoffset="13.313"
+  />
+</svg>

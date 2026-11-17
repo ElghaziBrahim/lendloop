@@ -23,7 +23,7 @@ export type Tone = "neutral" | "emerald" | "amber" | "red" | "blue";
  * exported `BadgeLabel` / `BadgeStatusStamp` components.
  */
 const badgeTones: Record<Tone, string> = {
-  neutral: "bg-neutral-tint text-neutral-800",
+  neutral: "bg-neutral-tint text-neutral-800 dark:text-neutral",
   emerald: "bg-positive-tint text-positive-strong",
   amber: "bg-warn-tint text-warn-strong",
   red: "bg-danger-tint text-danger-strong",
@@ -96,7 +96,7 @@ const buttonBase =
 
 const buttonVariants: Record<Variant, string> = {
   primary:
-    "bg-primary text-primary-foreground hover:bg-accent-hover focus-visible:outline-primary",
+    "bg-primary text-primary-foreground hover:bg-accent-hover focus-visible:outline-primary dark:hover:bg-primary dark:hover:brightness-110",
   secondary:
     "border border-input bg-card text-foreground hover:border-rule-dark focus-visible:outline-ring",
   danger:

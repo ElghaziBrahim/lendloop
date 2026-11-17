@@ -29,7 +29,7 @@ export function Hero() {
           <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-[14px]">
             <Link
               href="#shelf"
-              className="inline-flex h-[52px] items-center justify-center rounded-sm bg-primary px-[26px] text-[15px] font-semibold text-primary-foreground transition-colors hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="inline-flex h-[52px] items-center justify-center rounded-sm bg-primary px-[26px] text-[15px] font-semibold text-primary-foreground transition-colors hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring dark:hover:bg-primary dark:hover:brightness-110"
             >
               Explore the shelf
             </Link>

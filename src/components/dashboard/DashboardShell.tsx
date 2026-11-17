@@ -6,6 +6,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { api } from "../../../convex/_generated/api";
+import { BrandMark } from "@/components/BrandMark";
+import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 import { Badge, Button, Skeleton, cx } from "@/components/ui";
 import { errorMessage } from "@/lib/convex-error";
 
@@ -114,15 +116,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-svh flex-col bg-background text-foreground">
       <header className="sticky top-0 z-20 border-b border-border bg-card">
-        <div className="mx-auto flex h-[68px] w-full max-w-[1440px] items-center gap-8 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-[68px] w-full max-w-[1440px] items-center gap-3 px-4 sm:gap-8 sm:px-6 lg:px-8">
           <Link
             href="/dashboard"
             className="flex shrink-0 items-center gap-[9px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
           >
-            <span
-              aria-hidden="true"
-              className="block size-[22px] rounded-full bg-foreground"
-            />
+            <BrandMark className="size-[22px]" />
             <span className="font-serif text-lg font-semibold tracking-[-0.2px]">
               LendLoop
             </span>
@@ -149,7 +148,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                   className={cx(
                     "inline-flex shrink-0 items-center gap-[7px] rounded-[3px] px-3 py-2 text-[13px] whitespace-nowrap transition-colors",
                     active
-                      ? "bg-accent font-semibold text-primary"
+                      ? "bg-accent font-semibold text-primary dark:text-foreground"
                       : "font-medium text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -172,6 +171,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="flex shrink-0 items-center gap-[10px]">
+            <ThemeSwitcher />
             <span className="hidden max-w-[14rem] truncate font-mono text-[10.5px] tracking-[0.8px] text-muted-foreground uppercase sm:block">
               {user.name ?? user.email}
             </span>

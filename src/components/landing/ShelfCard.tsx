@@ -175,7 +175,7 @@ export function ShelfCard({ tools }: { tools: PublicTool[] }) {
           <p
             role="status"
             aria-live="polite"
-            className="mt-auto border-t border-muted pt-[18px] font-mono text-[10.5px] tracking-[0.7px] text-muted-foreground uppercase"
+            className="mt-auto border-t border-muted pt-[18px] font-mono text-[10.5px] tracking-[0.7px] text-muted-foreground uppercase dark:border-border"
           >
             {count}
           </p>
@@ -194,7 +194,7 @@ export function ShelfCard({ tools }: { tools: PublicTool[] }) {
           </div>
         ) : (
           <div className="relative min-w-0">
-            <div className="flex items-center justify-between border-b border-muted px-5 py-[18px] sm:px-8 sm:py-[22px]">
+            <div className="flex items-center justify-between border-b border-muted px-5 py-[18px] sm:px-8 sm:py-[22px] dark:border-border">
               <span className="font-mono text-[10px] font-medium tracking-[0.7px] text-muted-foreground uppercase">
                 Tool
               </span>
@@ -208,7 +208,7 @@ export function ShelfCard({ tools }: { tools: PublicTool[] }) {
               onScroll={updateScrollCue}
               tabIndex={0}
               aria-label="Tools on the shelf"
-              className="ll-scroll min-w-0 divide-y divide-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring "
+              className="ll-scroll min-w-0 divide-y divide-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring dark:divide-border"
             >
               {visible.map((tool, index) => (
                 <li

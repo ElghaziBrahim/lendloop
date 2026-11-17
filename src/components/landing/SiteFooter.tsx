@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandMark } from "@/components/BrandMark";
 
 /**
  * Band 7: the dark footer. Wordmark, tagline, the three anchors and sign-in,
@@ -26,15 +27,12 @@ export function SiteFooter() {
               href="/"
               className="flex shrink-0 items-center gap-2.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
             >
-              <span
-                aria-hidden="true"
-                className="block size-5 rounded-full bg-background"
-              />
+              <BrandMark className="size-5 text-inverse-foreground" />
               <span className="font-serif text-[21px] font-semibold tracking-[-0.3px] text-inverse-foreground">
                 LendLoop
               </span>
             </Link>
-            <p className="text-[13px] text-inverse-muted">
+            <p className="text-[13px] text-inverse-muted dark:text-neutral-700">
               A shared shelf for your circle.
             </p>
           </div>
@@ -47,7 +45,7 @@ export function SiteFooter() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-[13px] font-medium text-inverse-muted transition-colors hover:text-inverse-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                className="text-[13px] font-medium text-inverse-muted transition-colors hover:text-inverse-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring dark:text-neutral-700 dark:hover:text-inverse-foreground"
               >
                 {link.label}
               </Link>
@@ -55,7 +53,7 @@ export function SiteFooter() {
           </nav>
         </div>
 
-        <p className="mt-8 border-t border-inverse pt-5 font-mono text-[9.5px] tracking-[0.9px] text-inverse-muted uppercase">
+        <p className="mt-8 border-t border-inverse pt-5 font-mono text-[9.5px] tracking-[0.9px] text-inverse-muted uppercase dark:border-rule-dark dark:text-neutral-700">
           LendLoop · Neighbourhood tool lending · Only a tool&rsquo;s name and
           category are public
         </p>

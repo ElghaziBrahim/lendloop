@@ -80,7 +80,7 @@ export function OverviewStats() {
             href={card.href}
             className={
               waiting
-                ? "group rounded-md border border-photo-warm bg-sand-200 p-5 transition-colors hover:border-rule-dark"
+                ? "group rounded-md border border-photo-warm bg-sand-200 p-5 transition-colors hover:border-rule-dark dark:bg-accent"
                 : "group rounded-md border border-border bg-card p-5 transition-colors hover:border-rule-dark"
             }
           >
