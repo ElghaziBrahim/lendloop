@@ -198,7 +198,10 @@ export const recordReminderResult = internalMutation({
     }
 
     const now = Date.now();
-    const sentAt = args.status === "sent" ? (args.sentAt ?? now) : undefined;
+    // n8n can send a slightly future clock; a reminder is never recorded as
+    // having been sent later than this write.
+    const sentAt =
+      args.status === "sent" ? Math.min(args.sentAt ?? now, now) : undefined;
     const lastError =
       args.status === "failed"
         ? (args.error?.trim() || "n8n reported the reminder as failed.").slice(

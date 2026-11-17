@@ -8,6 +8,7 @@ import {
   isoDay,
   OTHER_EMAIL,
   OWNER_EMAIL,
+  seedLoan,
   seedRequest,
   seedTool,
   seedUser,
@@ -226,6 +227,63 @@ describe("tools.remove", () => {
   });
 });
 
+describe("tools.listShelf", () => {
+  test("returns a past booking while its loan is still out", async () => {
+    const t = setup();
+    const { tool, owner, borrower } = await seedBase(t);
+    await t.run(async (ctx) => {
+      const outRequest = await seedRequest(ctx, {
+        toolId: tool,
+        ownerId: owner,
+        requesterId: borrower,
+        startDate: isoDay(-10),
+        endDate: isoDay(-8),
+        status: "approved",
+      });
+      await seedLoan(ctx, {
+        toolId: tool,
+        requestId: outRequest,
+        ownerId: owner,
+        borrowerId: borrower,
+        startDate: isoDay(-10),
+        endDate: isoDay(-8),
+        dueDate: isoDay(-8),
+        status: "overdue",
+      });
+
+      // A returned loan from an earlier, separate booking is history: it must
+      // not come back as a booking.
+      const returnedRequest = await seedRequest(ctx, {
+        toolId: tool,
+        ownerId: owner,
+        requesterId: borrower,
+        startDate: isoDay(-30),
+        endDate: isoDay(-28),
+        status: "approved",
+      });
+      await seedLoan(ctx, {
+        toolId: tool,
+        requestId: returnedRequest,
+        ownerId: owner,
+        borrowerId: borrower,
+        startDate: isoDay(-30),
+        endDate: isoDay(-28),
+        dueDate: isoDay(-28),
+        status: "returned",
+        returnedAt: Date.now(),
+      });
+    });
+
+    const shelf = await t
+      .withIdentity(signIn(BORROWER_EMAIL))
+      .query(api.tools.listShelf, {});
+    expect(shelf).toHaveLength(1);
+    expect(shelf[0].bookings).toEqual([
+      { startDate: isoDay(-10), endDate: isoDay(-8) },
+    ]);
+  });
+});
+
 describe("tools.get", () => {
   test("the owner and an admin can read it, another user cannot", async () => {
     const t = setup();
@@ -367,6 +425,44 @@ describe("tools.availability", () => {
     expect(await ask(isoDay(10), isoDay(11))).toEqual({
       available: true,
       conflicts: [],
+    });
+  });
+
+  test("an overdue loan blocks every future range", async () => {
+    const t = setup();
+    const { tool, owner, borrower } = await seedBase(t);
+    await t.run(async (ctx) => {
+      const requestId = await seedRequest(ctx, {
+        toolId: tool,
+        ownerId: owner,
+        requesterId: borrower,
+        startDate: isoDay(-10),
+        endDate: isoDay(-8),
+        status: "approved",
+      });
+      await seedLoan(ctx, {
+        toolId: tool,
+        requestId,
+        ownerId: owner,
+        borrowerId: borrower,
+        startDate: isoDay(-10),
+        endDate: isoDay(-8),
+        dueDate: isoDay(-8),
+        status: "overdue",
+      });
+    });
+
+    const result = await t
+      .withIdentity(signIn(OTHER_EMAIL))
+      .query(api.tools.availability, {
+        toolId: tool,
+        startDate: isoDay(30),
+        endDate: isoDay(32),
+      });
+    expect(result).toEqual({
+      available: false,
+      // The real booking dates, not the synthetic blocking end.
+      conflicts: [{ startDate: isoDay(-10), endDate: isoDay(-8) }],
     });
   });
 

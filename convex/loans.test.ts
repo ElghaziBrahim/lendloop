@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import {
   ADMIN_EMAIL,
   BORROWER_EMAIL,
@@ -131,6 +131,46 @@ describe("loans.markReturned", () => {
   });
 });
 
+describe("loans.markOverdue", () => {
+  test("flips past-due active loans only", async () => {
+    const t = setup();
+    const base = await seedBase(t);
+    const past = await addLoan(t, base, {
+      startDate: isoDay(-5),
+      endDate: isoDay(-1),
+      dueDate: isoDay(-1),
+      status: "active",
+    });
+    const future = await addLoan(t, base, {
+      startDate: isoDay(1),
+      endDate: isoDay(2),
+      dueDate: isoDay(2),
+      status: "active",
+    });
+    const returned = await addLoan(t, base, {
+      startDate: isoDay(-8),
+      endDate: isoDay(-6),
+      dueDate: isoDay(-6),
+      status: "returned",
+      returnedAt: Date.now(),
+    });
+
+    await expect(
+      t.mutation(internal.loans.markOverdue, {}),
+    ).resolves.toBe(1);
+
+    expect(await t.run((ctx) => ctx.db.get(past.loanId))).toMatchObject({
+      status: "overdue",
+    });
+    expect(await t.run((ctx) => ctx.db.get(future.loanId))).toMatchObject({
+      status: "active",
+    });
+    expect(await t.run((ctx) => ctx.db.get(returned.loanId))).toMatchObject({
+      status: "returned",
+    });
+  });
+});
+
 describe("loans.overdue", () => {
   test("returns only past-due loans that have not been returned", async () => {
     const t = setup();
@@ -192,7 +232,9 @@ describe("loans.overdue", () => {
   test("is admin only", async () => {
     const t = setup();
 
-    await expect(t.query(api.loans.overdue, {})).rejects.toMatchObject({
+    await expect(
+      t.query(api.loans.overdue, { asOf: isoDay(0) }),
+    ).rejects.toMatchObject({
       data: { code: "UNAUTHENTICATED" },
     });
   });
@@ -204,7 +246,9 @@ describe("loans.overdue", () => {
     });
 
     await expect(
-      t.withIdentity(signIn(BORROWER_EMAIL)).query(api.loans.overdue, {}),
+      t
+        .withIdentity(signIn(BORROWER_EMAIL))
+        .query(api.loans.overdue, { asOf: isoDay(0) }),
     ).rejects.toMatchObject({ data: { code: "FORBIDDEN" } });
 
     await t.run((ctx) => seedUser(ctx, ADMIN_EMAIL, { role: "admin" }));
@@ -217,7 +261,7 @@ describe("loans.overdue", () => {
 });
 
 describe("loan visibility", () => {
-  test("listMine is the borrower's own loans, with a computed overdue flag", async () => {
+  test("listMine is the borrower's own loans, with the stored overdue flag", async () => {
     const t = setup();
     const base = await seedBase(t);
 
@@ -225,7 +269,7 @@ describe("loan visibility", () => {
       startDate: isoDay(-5),
       endDate: isoDay(-1),
       dueDate: isoDay(-1),
-      status: "active",
+      status: "overdue",
     });
     await addLoan(t, base, {
       startDate: isoDay(-5),
@@ -241,7 +285,7 @@ describe("loan visibility", () => {
     expect(mine).toHaveLength(2);
     expect(
       mine.filter((loan) => loan.overdue).map((loan) => loan.status),
-    ).toEqual(["active"]);
+    ).toEqual(["overdue"]);
 
     expect(
       await t.withIdentity(signIn(OTHER_EMAIL)).query(api.loans.listMine, {}),

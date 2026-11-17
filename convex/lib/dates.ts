@@ -15,6 +15,9 @@ import { ConvexError } from "convex/values";
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const MS_PER_DAY = 86_400_000;
 
+/** The longest request the app accepts, inclusive of both end days. */
+export const MAX_BOOKING_DAYS = 90;
+
 /** True only for a real calendar date in `YYYY-MM-DD` form. */
 export function isIsoDate(value: string): boolean {
   const match = ISO_DATE.exec(value);
@@ -56,6 +59,35 @@ export function assertDateRange(startDate: string, endDate: string): void {
   }
 }
 
+/**
+ * Validate a range that is about to become a request: it must be a real
+ * inclusive range, start today or later, and cover at most 90 days.
+ *
+ * `today` is passed in rather than read here so the rule has one clock in the
+ * caller and can be tested with a pinned date.
+ */
+export function assertBookableRange(
+  startDate: string,
+  endDate: string,
+  today: string,
+): void {
+  assertDateRange(startDate, endDate);
+
+  if (startDate < today) {
+    throw new ConvexError({
+      code: "INVALID_DATE_RANGE",
+      message: "A request cannot start in the past.",
+    });
+  }
+
+  if (daysBetween(startDate, endDate) + 1 > MAX_BOOKING_DAYS) {
+    throw new ConvexError({
+      code: "INVALID_DATE_RANGE",
+      message: `A request can cover at most ${MAX_BOOKING_DAYS} days.`,
+    });
+  }
+}
+
 /** Inclusive overlap: the two ranges share at least one calendar day. */
 export function rangesOverlap(
   aStart: string,
@@ -71,9 +103,4 @@ export function daysBetween(fromIso: string, toIso: string): number {
   const from = Date.parse(`${fromIso}T00:00:00Z`);
   const to = Date.parse(`${toIso}T00:00:00Z`);
   return Math.round((to - from) / MS_PER_DAY);
-}
-
-/** True when `dueDate` is strictly before `asOf` (due today is not overdue). */
-export function isPastDue(dueDate: string, asOf: string = todayIso()): boolean {
-  return dueDate < asOf;
 }

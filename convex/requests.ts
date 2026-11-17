@@ -5,8 +5,13 @@ import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { findApprovedConflicts } from "./lib/availability";
 import { requireOwnerOrAdmin, requireUser } from "./lib/authz";
-import { assertDateRange, rangesOverlap } from "./lib/dates";
+import {
+  assertBookableRange,
+  rangesOverlap,
+  todayIso,
+} from "./lib/dates";
 import { MESSAGE_MAX, optionalText } from "./lib/validation";
+import { requestStatusValidator } from "./schema";
 
 /**
  * Requests: a borrower asks for a tool over a day range, the tool's owner
@@ -16,6 +21,26 @@ import { MESSAGE_MAX, optionalText } from "./lib/validation";
  * mutation can authorize from the request alone and cannot be tricked into
  * approving on behalf of a different owner.
  */
+
+/** The shape every request read returns. `message` and `decidedAt` are nullable. */
+const requestViewValidator = v.object({
+  _id: v.id("requests"),
+  toolId: v.id("tools"),
+  toolName: v.string(),
+  toolCategory: v.string(),
+  startDate: v.string(),
+  endDate: v.string(),
+  message: v.union(v.string(), v.null()),
+  status: requestStatusValidator,
+  createdAt: v.number(),
+  decidedAt: v.union(v.number(), v.null()),
+});
+
+/** The owner's inbox adds the requester's identity. */
+const incomingRequestViewValidator = requestViewValidator.extend({
+  requesterName: v.union(v.string(), v.null()),
+  requesterEmail: v.string(),
+});
 
 async function toolName(ctx: QueryCtx | MutationCtx, toolId: Id<"tools">) {
   const tool = await ctx.db.get(toolId);
@@ -80,7 +105,7 @@ export const create = mutation({
       });
     }
 
-    assertDateRange(args.startDate, args.endDate);
+    assertBookableRange(args.startDate, args.endDate, todayIso());
 
     const conflicts = await findApprovedConflicts(
       ctx,
@@ -95,16 +120,21 @@ export const create = mutation({
       });
     }
 
-    // One live ask per borrower per tool: a double submit or an impatient
-    // retry must not fill the owner's inbox with duplicates.
+    // One pending ask per borrower per tool: a double submit or an impatient
+    // retry must not fill the owner's inbox with duplicates. An approved
+    // request needs no check here: the availability check above already blocks
+    // it while its loan is out and frees the dates once the loan is returned.
+    // Newest first: a pending duplicate is a recent request, so the cap keeps
+    // the rows this guard needs.
     const ownRequests = await ctx.db
       .query("requests")
       .withIndex("by_requester", (q) => q.eq("requesterId", user._id))
-      .collect();
+      .order("desc")
+      .take(200);
     const duplicate = ownRequests.find(
       (request) =>
         request.toolId === tool._id &&
-        (request.status === "pending" || request.status === "approved") &&
+        request.status === "pending" &&
         rangesOverlap(
           args.startDate,
           args.endDate,
@@ -146,27 +176,27 @@ export const create = mutation({
 /** Requests the caller made, newest first. Never another borrower's. */
 export const listMine = query({
   args: {},
+  returns: v.array(requestViewValidator),
   handler: async (ctx) => {
     const user = await requireUser(ctx);
     const requests = await ctx.db
       .query("requests")
       .withIndex("by_requester", (q) => q.eq("requesterId", user._id))
-      .collect();
+      .order("desc")
+      .take(200);
 
     const views = await Promise.all(
-      requests
-        .sort((a, b) => b.createdAt - a.createdAt)
-        .map(async (request) => ({
-          _id: request._id,
-          toolId: request.toolId,
-          ...(await toolName(ctx, request.toolId)),
-          startDate: request.startDate,
-          endDate: request.endDate,
-          message: request.message ?? null,
-          status: request.status,
-          createdAt: request.createdAt,
-          decidedAt: request.decidedAt ?? null,
-        })),
+      requests.map(async (request) => ({
+        _id: request._id,
+        toolId: request.toolId,
+        ...(await toolName(ctx, request.toolId)),
+        startDate: request.startDate,
+        endDate: request.endDate,
+        message: request.message ?? null,
+        status: request.status,
+        createdAt: request.createdAt,
+        decidedAt: request.decidedAt ?? null,
+      })),
     );
     return views;
   },
@@ -179,32 +209,32 @@ export const listMine = query({
  */
 export const listIncoming = query({
   args: {},
+  returns: v.array(incomingRequestViewValidator),
   handler: async (ctx) => {
     const user = await requireUser(ctx);
     const requests = await ctx.db
       .query("requests")
       .withIndex("by_owner", (q) => q.eq("ownerId", user._id))
-      .collect();
+      .order("desc")
+      .take(200);
 
     const views = await Promise.all(
-      requests
-        .sort((a, b) => b.createdAt - a.createdAt)
-        .map(async (request) => {
-          const requester = await ctx.db.get(request.requesterId);
-          return {
-            _id: request._id,
-            toolId: request.toolId,
-            ...(await toolName(ctx, request.toolId)),
-            requesterName: requester?.name ?? null,
-            requesterEmail: requester?.email ?? "",
-            startDate: request.startDate,
-            endDate: request.endDate,
-            message: request.message ?? null,
-            status: request.status,
-            createdAt: request.createdAt,
-            decidedAt: request.decidedAt ?? null,
-          };
-        }),
+      requests.map(async (request) => {
+        const requester = await ctx.db.get(request.requesterId);
+        return {
+          _id: request._id,
+          toolId: request.toolId,
+          ...(await toolName(ctx, request.toolId)),
+          requesterName: requester?.name ?? null,
+          requesterEmail: requester?.email ?? "",
+          startDate: request.startDate,
+          endDate: request.endDate,
+          message: request.message ?? null,
+          status: request.status,
+          createdAt: request.createdAt,
+          decidedAt: request.decidedAt ?? null,
+        };
+      }),
     );
     return views;
   },

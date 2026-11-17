@@ -36,7 +36,11 @@ async function seedBase(t: ReturnType<typeof setup>) {
 async function addLoan(
   t: ReturnType<typeof setup>,
   base: Awaited<ReturnType<typeof seedBase>>,
-  options: { startDate: string; endDate: string; status?: "active" | "returned" },
+  options: {
+    startDate: string;
+    endDate: string;
+    status?: "active" | "overdue" | "returned";
+  },
 ) {
   return await t.run(async (ctx) => {
     const requestId = await seedRequest(ctx, {
@@ -182,7 +186,7 @@ describe("admin.listLoans", () => {
     await addLoan(t, base, {
       startDate: isoDay(-2),
       endDate: isoDay(-1),
-      status: "active",
+      status: "overdue",
     });
     await addLoan(t, base, {
       startDate: isoDay(-5),

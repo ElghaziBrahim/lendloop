@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { internalMutation } from "./_generated/server";
@@ -11,10 +11,15 @@ import { internalMutation } from "./_generated/server";
  * — once an admin has signed in — a set of requests and loans around that admin
  * so every authenticated view has something to render.
  *
- * `internalMutation` means the browser cannot call this; only the Convex CLI
- * (`npx convex run seed:dev`) or another Convex function can. It is idempotent:
- * the maker user makes a second base run a no-op, and the activity phase is
- * skipped once the admin has any request.
+ * `internalMutation` means the browser cannot call this, but the CLI and
+ * another Convex function still can, including against production. The
+ * `confirm: "seed-demo-data"` argument is therefore required, so running it is
+ * always deliberate:
+ *
+ *     npx convex run seed:dev '{"confirm":"seed-demo-data"}'
+ *
+ * It is idempotent: the maker user makes a second base run a no-op, and the
+ * activity phase is skipped once the admin has any request.
  */
 
 const SEED_MARKER = "seed_maya_chen";
@@ -40,7 +45,7 @@ async function toolByName(
   const tools = await ctx.db
     .query("tools")
     .withIndex("by_owner", (q) => q.eq("ownerId", ownerId))
-    .collect();
+    .take(200);
   return tools.find((tool) => tool.name === name)?._id ?? null;
 }
 
@@ -408,14 +413,22 @@ async function seedActivity(ctx: MutationCtx) {
 }
 
 export const dev = internalMutation({
-  args: {},
+  args: { confirm: v.optional(v.literal("seed-demo-data")) },
   returns: v.object({
     seeded: v.boolean(),
     tools: v.number(),
     demo: v.boolean(),
     demoLoans: v.number(),
   }),
-  handler: async (ctx) => {
+  handler: async (ctx, args) => {
+    if (args.confirm !== "seed-demo-data") {
+      throw new ConvexError({
+        code: "SEED_NOT_CONFIRMED",
+        message:
+          "This writes demo rows. Run `npx convex run seed:dev '{\"confirm\":\"seed-demo-data\"}'` to confirm.",
+      });
+    }
+
     const existing = await userByClerkId(ctx, SEED_MARKER);
 
     if (!existing) {
@@ -423,7 +436,7 @@ export const dev = internalMutation({
     }
 
     const activity = await seedActivity(ctx);
-    const tools = await ctx.db.query("tools").collect();
+    const tools = await ctx.db.query("tools").take(1000);
 
     return {
       seeded: !existing,

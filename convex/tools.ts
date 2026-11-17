@@ -3,7 +3,7 @@ import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { findApprovedConflicts } from "./lib/availability";
 import { requireOwnerOrAdmin, requireUser } from "./lib/authz";
-import { assertDateRange, todayIso } from "./lib/dates";
+import { assertDateRange } from "./lib/dates";
 import {
   CATEGORY_MAX,
   DESCRIPTION_MAX,
@@ -11,6 +11,7 @@ import {
   optionalText,
   requireText,
 } from "./lib/validation";
+import { toolStatusValidator } from "./schema";
 
 /**
  * Tool listings.
@@ -32,6 +33,17 @@ function toolView(tool: Doc<"tools">) {
   };
 }
 
+/** The exact shape `listMine` and `get` return. */
+const toolViewValidator = v.object({
+  _id: v.id("tools"),
+  name: v.string(),
+  category: v.string(),
+  description: v.union(v.string(), v.null()),
+  status: toolStatusValidator,
+  createdAt: v.number(),
+  updatedAt: v.number(),
+});
+
 /**
  * The anonymous listing. Returns exactly the two fields a visitor may see;
  * adding an owner field here would leak identity from a public endpoint.
@@ -48,7 +60,7 @@ export const listPublic = query({
     const tools = await ctx.db
       .query("tools")
       .withIndex("by_status", (q) => q.eq("status", "active"))
-      .collect();
+      .take(500);
 
     return tools.map((tool) => ({ name: tool.name, category: tool.category }));
   },
@@ -63,7 +75,9 @@ export const listPublic = query({
  *
  * `bookings` reuses the same availability rule the mutations enforce: an
  * approved request blocks its range unless its loan has already been returned.
- * A pending request is not in the list.
+ * A returned loan is history and is not listed; an unreturned loan past its
+ * end date is listed so the shelf can show it as overdue. A pending request is
+ * not in the list.
  */
 export const listShelf = query({
   args: {},
@@ -83,12 +97,11 @@ export const listShelf = query({
   ),
   handler: async (ctx) => {
     const user = await requireUser(ctx);
-    const today = todayIso();
 
     const tools = await ctx.db
       .query("tools")
       .withIndex("by_status", (q) => q.eq("status", "active"))
-      .collect();
+      .take(200);
 
     const views = await Promise.all(
       tools.map(async (tool) => {
@@ -96,7 +109,7 @@ export const listShelf = query({
         const bookings = await findApprovedConflicts(
           ctx,
           tool._id,
-          today,
+          "0000-01-01",
           "9999-12-31",
         );
 
@@ -126,22 +139,23 @@ export const listShelf = query({
 /** The caller's own listings, in every state, newest first. */
 export const listMine = query({
   args: {},
+  returns: v.array(toolViewValidator),
   handler: async (ctx) => {
     const user = await requireUser(ctx);
     const tools = await ctx.db
       .query("tools")
       .withIndex("by_owner", (q) => q.eq("ownerId", user._id))
-      .collect();
+      .order("desc")
+      .take(200);
 
-    return tools
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .map((tool) => toolView(tool));
+    return tools.map((tool) => toolView(tool));
   },
 });
 
 /** One listing, for its owner or an admin. */
 export const get = query({
   args: { toolId: v.id("tools") },
+  returns: toolViewValidator,
   handler: async (ctx, args) => {
     const tool = await ctx.db.get(args.toolId);
     if (!tool) {

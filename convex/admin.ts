@@ -3,8 +3,11 @@ import type { Doc } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAdmin } from "./lib/authz";
-import { isPastDue, todayIso } from "./lib/dates";
-import { loanStatusValidator } from "./schema";
+import {
+  loanStatusValidator,
+  roleValidator,
+  toolStatusValidator,
+} from "./schema";
 
 /**
  * Admin surface.
@@ -18,9 +21,21 @@ import { loanStatusValidator } from "./schema";
 /** Everyone with an account, for the trusted-lender list. No Clerk ids. */
 export const listUsers = query({
   args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("users"),
+      email: v.string(),
+      name: v.union(v.string(), v.null()),
+      role: roleValidator,
+      trustedLender: v.boolean(),
+      createdAt: v.number(),
+    }),
+  ),
   handler: async (ctx) => {
     await requireAdmin(ctx);
-    const users = await ctx.db.query("users").collect();
+    // Bounded: the newest 500 accounts, presented alphabetically. A larger
+    // circle needs pagination before this cap is reached.
+    const users = await ctx.db.query("users").order("desc").take(500);
 
     return users
       .sort((a, b) => a.email.localeCompare(b.email))
@@ -55,6 +70,19 @@ export const setTrustedLender = mutation({
   },
 });
 
+/** The admin listing view: the owner's projection plus who owns it. */
+const adminToolViewValidator = v.object({
+  _id: v.id("tools"),
+  name: v.string(),
+  category: v.string(),
+  description: v.union(v.string(), v.null()),
+  status: toolStatusValidator,
+  ownerName: v.union(v.string(), v.null()),
+  ownerEmail: v.string(),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+});
+
 /**
  * Every listing in the system, removed ones included, so an admin can see the
  * shelf as it really is and remove any of it. Same projection the owner sees
@@ -62,27 +90,26 @@ export const setTrustedLender = mutation({
  */
 export const listTools = query({
   args: {},
+  returns: v.array(adminToolViewValidator),
   handler: async (ctx) => {
     await requireAdmin(ctx);
 
-    const tools = await ctx.db.query("tools").collect();
+    const tools = await ctx.db.query("tools").order("desc").take(500);
     const views = await Promise.all(
-      tools
-        .sort((a, b) => b.createdAt - a.createdAt)
-        .map(async (tool) => {
-          const owner = await ctx.db.get(tool.ownerId);
-          return {
-            _id: tool._id,
-            name: tool.name,
-            category: tool.category,
-            description: tool.description ?? null,
-            status: tool.status,
-            ownerName: owner?.name ?? null,
-            ownerEmail: owner?.email ?? "",
-            createdAt: tool.createdAt,
-            updatedAt: tool.updatedAt,
-          };
-        }),
+      tools.map(async (tool) => {
+        const owner = await ctx.db.get(tool.ownerId);
+        return {
+          _id: tool._id,
+          name: tool.name,
+          category: tool.category,
+          description: tool.description ?? null,
+          status: tool.status,
+          ownerName: owner?.name ?? null,
+          ownerEmail: owner?.email ?? "",
+          createdAt: tool.createdAt,
+          updatedAt: tool.updatedAt,
+        };
+      }),
     );
     return views;
   },
@@ -117,11 +144,24 @@ export const removeTool = mutation({
   },
 });
 
-async function loanView(
-  ctx: QueryCtx,
-  loan: Doc<"loans">,
-  today: string,
-) {
+const adminLoanViewValidator = v.object({
+  _id: v.id("loans"),
+  requestId: v.id("requests"),
+  toolId: v.id("tools"),
+  toolName: v.string(),
+  borrowerName: v.union(v.string(), v.null()),
+  borrowerEmail: v.string(),
+  ownerName: v.union(v.string(), v.null()),
+  ownerEmail: v.string(),
+  startDate: v.string(),
+  endDate: v.string(),
+  dueDate: v.string(),
+  status: loanStatusValidator,
+  overdue: v.boolean(),
+  returnedAt: v.union(v.number(), v.null()),
+});
+
+async function loanView(ctx: QueryCtx, loan: Doc<"loans">) {
   const tool = await ctx.db.get(loan.toolId);
   const borrower = await ctx.db.get(loan.borrowerId);
   const owner = await ctx.db.get(loan.ownerId);
@@ -139,7 +179,8 @@ async function loanView(
     endDate: loan.endDate,
     dueDate: loan.dueDate,
     status: loan.status,
-    overdue: loan.status !== "returned" && isPastDue(loan.dueDate, today),
+    // Stored state, kept current by the daily `loans.markOverdue` cron.
+    overdue: loan.status === "overdue",
     returnedAt: loan.returnedAt ?? null,
   };
 }
@@ -147,6 +188,7 @@ async function loanView(
 /** Every loan in the system, optionally filtered by stored status. */
 export const listLoans = query({
   args: { status: v.optional(loanStatusValidator) },
+  returns: v.array(adminLoanViewValidator),
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
@@ -155,14 +197,10 @@ export const listLoans = query({
       ? await ctx.db
           .query("loans")
           .withIndex("by_status", (q) => q.eq("status", status))
-          .collect()
-      : await ctx.db.query("loans").collect();
+          .order("desc")
+          .take(500)
+      : await ctx.db.query("loans").order("desc").take(500);
 
-    const today = todayIso();
-    return await Promise.all(
-      loans
-        .sort((a, b) => b.createdAt - a.createdAt)
-        .map((loan) => loanView(ctx, loan, today)),
-    );
+    return await Promise.all(loans.map((loan) => loanView(ctx, loan)));
   },
 });

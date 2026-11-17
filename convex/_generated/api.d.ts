@@ -11,6 +11,7 @@
 import type * as admin from "../admin.js";
 import type * as automation from "../automation.js";
 import type * as automationStore from "../automationStore.js";
+import type * as crons from "../crons.js";
 import type * as http from "../http.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_authz from "../lib/authz.js";
@@ -22,6 +23,7 @@ import type * as lib_signing from "../lib/signing.js";
 import type * as lib_users from "../lib/users.js";
 import type * as lib_validation from "../lib/validation.js";
 import type * as loans from "../loans.js";
+import type * as maintenance from "../maintenance.js";
 import type * as requests from "../requests.js";
 import type * as seed from "../seed.js";
 import type * as tools from "../tools.js";
@@ -37,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   automation: typeof automation;
   automationStore: typeof automationStore;
+  crons: typeof crons;
   http: typeof http;
   "lib/auth": typeof lib_auth;
   "lib/authz": typeof lib_authz;
@@ -48,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   "lib/users": typeof lib_users;
   "lib/validation": typeof lib_validation;
   loans: typeof loans;
+  maintenance: typeof maintenance;
   requests: typeof requests;
   seed: typeof seed;
   tools: typeof tools;

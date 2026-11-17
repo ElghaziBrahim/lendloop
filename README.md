@@ -66,7 +66,7 @@ The three flows in words:
 
 1. A signed-in browser calls Convex with the Clerk session token. Convex validates the issuer and `aud: "convex"` against `CLERK_JWT_ISSUER_DOMAIN`, loads the user row by token subject, and enforces the rule inside the function.
 2. `requests.create` schedules `automation.notifyRequest`. The action loads the request from the database, signs the JSON body, and posts it to the n8n webhook. It never awaits n8n in the request path, so a broken workflow cannot fail a borrower's request. Every attempt is written to `automationEvents`.
-3. The daily n8n schedule signs a GET to `/n8n/overdue`, sends one email per newly overdue loan, then signs a POST back to `/n8n/reminder-result`. Convex verifies the signature and the idempotency key before writing.
+3. The daily n8n schedule signs a GET to `/n8n/overdue`, sends one email per newly overdue loan, then signs a POST back to `/n8n/reminder-result`. Convex verifies the signature and the idempotency key before writing. Convex also runs two daily crons of its own: `loans.markOverdue` flips past-due loans to `overdue` so the list views never read the clock, and `maintenance.pruneAutomation` prunes replay keys and audit events.
 
 ## Local setup
 
@@ -151,10 +151,10 @@ Then sign in once at <http://localhost:3000/sign-in>. `ConvexUserBootstrap` crea
 ### 5. Seed the demo shelf
 
 ```bash
-npx convex run seed:dev
+npx convex run seed:dev '{"confirm":"seed-demo-data"}'
 ```
 
-The seed adds two demo lenders and seven tools, including one removed listing so the public filter is visible. Run it a second time after your admin has signed in: that run adds four tools owned by the admin, plus demo requests and loans around that account. The seed is idempotent; a second run does not duplicate rows.
+The `confirm` argument is required. Without it the mutation throws `SEED_NOT_CONFIRMED`, so a stale script cannot seed the wrong deployment by accident. The seed adds two demo lenders and seven tools, including one removed listing so the public filter is visible. Run it a second time after your admin has signed in: that run adds four tools owned by the admin, plus demo requests and loans around that account. The seed is idempotent; a second run does not duplicate rows.
 
 ### 6. Check the app
 
@@ -231,8 +231,8 @@ That checks that an unsigned `/n8n/overdue` gets 401, a signed call gets 200, an
 The app is a stock Next.js project, so Vercel needs no build override. Convex functions are deployed from the CLI, separately from the frontend build:
 
 ```bash
-npx convex deploy                     # pushes convex/ to the production deployment
-npx convex run --prod seed:dev        # optional: the demo shelf, only on a fresh deployment
+npx convex deploy                      # pushes convex/ to the production deployment
+npx convex run --prod seed:dev '{"confirm":"seed-demo-data"}'   # optional: the demo shelf, only on a fresh deployment
 ```
 
 On the production Convex deployment, set `CLERK_JWT_ISSUER_DOMAIN`, `ADMIN_EMAILS`, `N8N_HMAC_SECRET` and `N8N_REQUEST_WEBHOOK_URL` **before** the first `npx convex deploy`: the auth config is read from the deployment's environment at deploy time.
@@ -389,7 +389,7 @@ The rule is simple: a field that no screen or workflow needs is not sent. This t
 |---|---|---|
 | Anonymous browser, `tools.listPublic` | `name`, `category` | The public shelf. No owner, no description, no dates. |
 | Signed-in shelf, `tools.listShelf` | tool `name`, `category`, `description`; owner display `name`; trusted flag; `ownerIsMe`; booked `startDate` and `endDate` pairs | A borrower must know who owns the tool and when it is free. Email stays server-side. |
-| Your own account, `users.current` | your `clerkId`, `email`, `name`, `imageUrl`, `role`, `trustedLender`, `createdAt`, `lastSeenAt` | The dashboard header needs your name and role. No other user's row is returned. |
+| Your own account, `users.current` | your `email`, `name`, `imageUrl`, `role`, `trustedLender`, `createdAt`, `lastSeenAt` | The dashboard header needs your name and role. `clerkId` stays server-side, and no other user's row is returned. |
 | Your own requests, `requests.listMine` | `toolId`, tool `name` and `category`, `startDate`, `endDate`, `message`, `status`, `createdAt`, `decidedAt` | Your side of the exchange. No other member's identity. |
 | Your own loans, `loans.listMine` | `toolId`, tool `name`, `startDate`, `endDate`, `dueDate`, `status`, `overdue`, `returnedAt` | Your side of the exchange. No other member's identity. |
 | Your own listings, `tools.listMine`, `tools.get` | `name`, `category`, `description`, `status`, `createdAt`, `updatedAt` | The manage screen. The owner is you, so no owner field is needed. |
@@ -414,7 +414,7 @@ What the app never collects:
 - Owner identity on the public page.
 - Another member's request data outside the owner and admin views.
 
-Two honest caveats. Tool descriptions and request messages are free text, so a user can type personal information into them. And the reminder and automation audit rows keep the idempotency keys and loan ids indefinitely; a production deployment should add a retention window for `automationIdempotency` and for `automationEvents.payload`.
+Two honest caveats. Tool descriptions and request messages are free text, so a user can type personal information into them. And the automation tables are pruned on a schedule — replay keys after 7 days and audit events after 90 — but the `reminders` rows themselves have no retention window yet.
 
 Two fields also travel without a current consumer: the tool category on the request event and the owner email on the overdue response. Removing them is a one-line change in `convex/automation.ts` and `convex/loans.ts` if you want the payload to match the templates exactly.
 
@@ -425,6 +425,9 @@ Two fields also travel without a current consumer: the tool category on the requ
 - a non-owner cannot edit, delete or decide, and admin variants pass;
 - `listPublic` returns exactly `name` and `category`;
 - overlapping bookings are refused, including at approval time;
+- a loan still out past its due date blocks every future booking for that tool;
+- a request cannot start in the past or cover more than 90 days;
+- the daily sweep flips past-due loans to `overdue` and the list views report that stored flag;
 - overdue returns only past-due, unreturned loans;
 - the signature verifier accepts a genuine signature and rejects a tampered body, a stale timestamp, a future timestamp and an unsigned request;
 - one idempotency key writes one reminder and one event, and a replay writes nothing;
@@ -461,6 +464,7 @@ Two things I would do before calling it production ready, beyond the service swa
 | `convex/schema.ts` | Seven tables: users, tools, requests, loans, reminders, automationEvents, automationIdempotency. |
 | `convex/tools.ts`, `requests.ts`, `loans.ts`, `admin.ts` | Domain functions with authorization inside each one. |
 | `convex/automation.ts`, `automationStore.ts` | Outbound signing, the signed endpoints' storage layer, and the idempotency ledger. |
+| `convex/maintenance.ts`, `crons.ts` | Automation retention and the two daily scheduled jobs. |
 | `convex/http.ts` | `GET /n8n/overdue` and `POST /n8n/reminder-result`. |
 | `convex/lib/signing.ts` | The HMAC contract in one place. |
 | `n8n/*.json` | Three importable workflows. No secrets inside. |

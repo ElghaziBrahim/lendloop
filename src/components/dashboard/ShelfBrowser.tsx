@@ -20,9 +20,10 @@ import { formatDate, todayIso } from "@/lib/format";
  * availability to decide without opening a date picker.
  *
  * "Availability" here is the reservation ledger the server already enforces:
- * an approved request blocks its range until the loan is marked returned. The
- * exact date check happens in the request form against `tools.availability`, so
- * this view only has to say "free now" or "out until".
+ * an approved request blocks its range until the loan is marked returned, and
+ * an unreturned loan past its end date blocks every future date. The exact
+ * date check happens in the request form against `tools.availability`, so this
+ * view only has to say "available", "out until" or "overdue".
  */
 
 type ShelfTool = FunctionReturnType<typeof api.tools.listShelf>[number];
@@ -135,6 +136,12 @@ function FilterChip({
 function ShelfCard({ tool }: { tool: ShelfTool }) {
   const today = todayIso();
 
+  // Every unreturned approved booking comes back. A booking whose end date
+  // has passed is the item still being out; one that covers today is the
+  // current loan; one that starts later is the next reservation.
+  const overdue = [...tool.bookings]
+    .filter((booking) => booking.endDate < today)
+    .sort((a, b) => b.endDate.localeCompare(a.endDate))[0];
   const ongoing = tool.bookings.find(
     (booking) => booking.startDate <= today && booking.endDate >= today,
   );
@@ -142,14 +149,19 @@ function ShelfCard({ tool }: { tool: ShelfTool }) {
     .filter((booking) => booking.startDate > today)
     .sort((a, b) => a.startDate.localeCompare(b.startDate))[0];
 
-  const availability = ongoing
-    ? { tone: "amber" as const, text: `Out until ${formatDate(ongoing.endDate)}` }
-    : upcoming
-      ? {
-          tone: "emerald" as const,
-          text: `Free now · booked ${formatDate(upcoming.startDate)}`,
-        }
-      : { tone: "emerald" as const, text: "Available now" };
+  const availability = overdue
+    ? {
+        tone: "danger" as const,
+        text: `Overdue - out since ${formatDate(overdue.startDate)}`,
+      }
+    : ongoing
+      ? { tone: "amber" as const, text: `Out until ${formatDate(ongoing.endDate)}` }
+      : upcoming
+        ? {
+            tone: "emerald" as const,
+            text: `Free now · booked ${formatDate(upcoming.startDate)}`,
+          }
+        : { tone: "emerald" as const, text: "Available now" };
 
   const available = availability.tone === "emerald";
 
@@ -176,10 +188,20 @@ function ShelfCard({ tool }: { tool: ShelfTool }) {
           className={
             available
               ? "block size-[6px] rounded-full bg-chart-1"
-              : "block size-[6px] rounded-full bg-chart-2"
+              : overdue
+                ? "block size-[6px] rounded-full bg-chart-3"
+                : "block size-[6px] rounded-full bg-chart-2"
           }
         />
-        <span className={available ? "text-positive-strong" : "text-warn-strong"}>
+        <span
+          className={
+            available
+              ? "text-positive-strong"
+              : overdue
+                ? "text-danger-strong"
+                : "text-warn-strong"
+          }
+        >
           {availability.text}
         </span>
       </p>

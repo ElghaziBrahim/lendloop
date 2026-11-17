@@ -81,7 +81,6 @@ const schema = defineSchema({
     lastSeenAt: v.number(),
   })
     .index("by_clerk_id", ["clerkId"])
-    .index("by_email", ["email"])
     .index("by_role", ["role"]),
 
   /**
@@ -99,8 +98,7 @@ const schema = defineSchema({
     updatedAt: v.number(),
   })
     .index("by_owner", ["ownerId"])
-    .index("by_status", ["status"])
-    .index("by_owner_status", ["ownerId", "status"]),
+    .index("by_status", ["status"]),
 
   /**
    * A borrower's ask for a tool over a date range. `ownerId` is denormalised
@@ -119,10 +117,8 @@ const schema = defineSchema({
     decidedBy: v.optional(v.id("users")),
     createdAt: v.number(),
   })
-    .index("by_tool", ["toolId"])
     .index("by_requester", ["requesterId"])
     .index("by_owner", ["ownerId"])
-    .index("by_status", ["status"])
     .index("by_tool_status", ["toolId", "status"])
     .index("by_owner_status", ["ownerId", "status"]),
 
@@ -144,7 +140,6 @@ const schema = defineSchema({
     lastReminderAt: v.optional(v.number()),
     createdAt: v.number(),
   })
-    .index("by_tool", ["toolId"])
     .index("by_borrower", ["borrowerId"])
     .index("by_owner", ["ownerId"])
     .index("by_status", ["status"])
@@ -166,7 +161,6 @@ const schema = defineSchema({
     createdAt: v.number(),
   })
     .index("by_loan", ["loanId"])
-    .index("by_status", ["status"])
     .index("by_idempotency_key", ["idempotencyKey"]),
 
   /**
@@ -187,9 +181,7 @@ const schema = defineSchema({
     createdAt: v.number(),
   })
     .index("by_created", ["createdAt"])
-    .index("by_kind", ["kind"])
-    .index("by_direction", ["direction"])
-    .index("by_idempotency_key", ["idempotencyKey"])
+    .index("by_status_created", ["status", "createdAt"])
     .index("by_loan_created", ["loanId", "createdAt"]),
 
   /**
@@ -197,15 +189,18 @@ const schema = defineSchema({
    * idempotency key; `result` stores the JSON the first call returned, so a
    * retried n8n run gets the original outcome and performs no second write.
    *
-   * Rows can be pruned once older than the retry horizon (n8n retries for
-   * hours, not weeks), which keeps the table small.
+   * Rows are pruned by the daily `maintenance.pruneAutomation` job once older
+   * than the retry horizon (n8n retries for hours, not weeks), which keeps the
+   * table small.
    */
   automationIdempotency: defineTable({
     key: v.string(),
     kind: v.string(),
     result: v.string(),
     createdAt: v.number(),
-  }).index("by_key", ["key"]),
+  })
+    .index("by_key", ["key"])
+    .index("by_created", ["createdAt"]),
 });
 
 export default schema;

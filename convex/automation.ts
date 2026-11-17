@@ -278,7 +278,7 @@ export const loanActivity = query({
       .query("automationEvents")
       .withIndex("by_loan_created", (q) => q.eq("loanId", args.loanId))
       .order("desc")
-      .collect();
+      .take(100);
 
     return events.map((event) => ({
       _id: event._id,

@@ -778,10 +778,9 @@ describe("outbound request notification", () => {
     ).toBe(`request-notification:${base.requestId}`);
 
     const events = await t.run(async (ctx) =>
-      ctx.db
-        .query("automationEvents")
-        .withIndex("by_direction", (q) => q.eq("direction", "outbound"))
-        .collect(),
+      (await ctx.db.query("automationEvents").collect()).filter(
+        (event) => event.direction === "outbound",
+      ),
     );
     expect(events).toHaveLength(1);
     expect(events[0]).toMatchObject({
@@ -870,5 +869,95 @@ describe("outbound request notification", () => {
       direction: "outbound",
       idempotencyKey: `request-notification:${payload.requestId}`,
     });
+  });
+});
+
+describe("reminder sentAt clamp", () => {
+  beforeEach(() => {
+    process.env.N8N_HMAC_SECRET = TEST_SECRET;
+  });
+
+  test("a future sentAt is clamped to the write time", async () => {
+    const t = setup();
+    const base = await seedOverdue(t);
+
+    const before = Date.now();
+    const response = await signedFetch(t, "/n8n/reminder-result", {
+      method: "POST",
+      body: reminderBody(base.loanId, { sentAt: Date.now() + 3_600_000 }),
+    });
+    const after = Date.now();
+
+    expect(response.status).toBe(200);
+
+    const stored = await t.run(async (ctx) => ({
+      reminders: await ctx.db.query("reminders").collect(),
+      loan: await ctx.db.get(base.loanId),
+    }));
+    const sentAt = stored.reminders[0].sentAt;
+    expect(typeof sentAt).toBe("number");
+    expect(sentAt).toBeGreaterThanOrEqual(before);
+    expect(sentAt).toBeLessThanOrEqual(after);
+    expect(stored.loan?.lastReminderAt).toBe(sentAt);
+  });
+});
+
+describe("automation retention", () => {
+  test("prunes the old ledger and audit rows and closes stale pending events", async () => {
+    const t = setup();
+    const now = Date.now();
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("automationIdempotency", {
+        key: "old-key",
+        kind: "reminder-result",
+        result: "{}",
+        createdAt: now - 8 * 86_400_000,
+      });
+      await ctx.db.insert("automationIdempotency", {
+        key: "fresh-key",
+        kind: "reminder-result",
+        result: "{}",
+        createdAt: now,
+      });
+      await ctx.db.insert("automationEvents", {
+        kind: "request.created",
+        direction: "outbound",
+        status: "pending",
+        createdAt: now - 2 * 3_600_000,
+      });
+      await ctx.db.insert("automationEvents", {
+        kind: "request.created",
+        direction: "outbound",
+        status: "delivered",
+        createdAt: now - 91 * 86_400_000,
+      });
+      await ctx.db.insert("automationEvents", {
+        kind: "request.created",
+        direction: "outbound",
+        status: "delivered",
+        createdAt: now,
+      });
+    });
+
+    const result = await t.mutation(internal.maintenance.pruneAutomation, {});
+    expect(result).toEqual({
+      prunedIdempotency: 1,
+      markedStale: 1,
+      prunedEvents: 1,
+    });
+
+    const rows = await t.run(async (ctx) => ({
+      ledger: await ctx.db.query("automationIdempotency").collect(),
+      events: await ctx.db.query("automationEvents").collect(),
+    }));
+    expect(rows.ledger.map((row) => row.key)).toEqual(["fresh-key"]);
+    expect(rows.events).toHaveLength(2);
+    expect(rows.events.find((row) => row.status === "failed")).toMatchObject({
+      lastError: "No result was recorded within an hour.",
+    });
+    expect(rows.events.filter((row) => row.status === "delivered")).toHaveLength(
+      1,
+    );
   });
 });

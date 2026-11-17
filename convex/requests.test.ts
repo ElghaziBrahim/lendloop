@@ -8,6 +8,7 @@ import {
   isoDay,
   OTHER_EMAIL,
   OWNER_EMAIL,
+  seedLoan,
   seedRequest,
   seedTool,
   seedUser,
@@ -109,6 +110,38 @@ describe("requests.create", () => {
     ).rejects.toMatchObject({ data: { code: "INVALID_DATE_RANGE" } });
   });
 
+  test("refuses a start in the past and a range over 90 days", async () => {
+    const t = setup();
+    const { tool } = await seedBase(t);
+    const caller = t.withIdentity(signIn(BORROWER_EMAIL));
+
+    await expect(
+      caller.mutation(api.requests.create, {
+        toolId: tool,
+        startDate: isoDay(-1),
+        endDate: isoDay(2),
+      }),
+    ).rejects.toMatchObject({
+      data: {
+        code: "INVALID_DATE_RANGE",
+        message: "A request cannot start in the past.",
+      },
+    });
+
+    await expect(
+      caller.mutation(api.requests.create, {
+        toolId: tool,
+        startDate: isoDay(1),
+        endDate: isoDay(91),
+      }),
+    ).rejects.toMatchObject({
+      data: {
+        code: "INVALID_DATE_RANGE",
+        message: "A request can cover at most 90 days.",
+      },
+    });
+  });
+
   test("an overlapping approved request blocks a new request", async () => {
     const t = setup();
     const { tool, owner, borrower } = await seedBase(t);
@@ -150,6 +183,47 @@ describe("requests.create", () => {
         endDate: isoDay(13),
       }),
     ).rejects.toMatchObject({ data: { code: "ALREADY_REQUESTED" } });
+  });
+
+  test("a returned loan frees its dates for the same borrower's next request", async () => {
+    const t = setup();
+    const { tool, owner, borrower } = await seedBase(t);
+    await t.run(async (ctx) => {
+      const requestId = await seedRequest(ctx, {
+        toolId: tool,
+        ownerId: owner,
+        requesterId: borrower,
+        startDate: isoDay(1),
+        endDate: isoDay(3),
+        status: "approved",
+      });
+      await seedLoan(ctx, {
+        toolId: tool,
+        requestId,
+        ownerId: owner,
+        borrowerId: borrower,
+        startDate: isoDay(1),
+        endDate: isoDay(3),
+        dueDate: isoDay(3),
+        status: "returned",
+        returnedAt: Date.now(),
+      });
+    });
+
+    const id = await t
+      .withIdentity(signIn(BORROWER_EMAIL))
+      .mutation(api.requests.create, {
+        toolId: tool,
+        startDate: isoDay(2),
+        endDate: isoDay(4),
+      });
+
+    expect(await t.run((ctx) => ctx.db.get(id))).toMatchObject({
+      requesterId: borrower,
+      startDate: isoDay(2),
+      endDate: isoDay(4),
+      status: "pending",
+    });
   });
 
   test("a signed-out caller cannot request", async () => {

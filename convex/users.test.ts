@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -52,6 +52,17 @@ describe("users.store", () => {
     expect(row?.email).toEqual(MEMBER);
     expect(row?.role).toEqual("user");
     expect(row?.trustedLender).toEqual(false);
+    expect(row).not.toHaveProperty("clerkId");
+    expect(Object.keys(row ?? {}).sort()).toEqual([
+      "_id",
+      "createdAt",
+      "email",
+      "imageUrl",
+      "lastSeenAt",
+      "name",
+      "role",
+      "trustedLender",
+    ]);
   });
 
   test("the first email in ADMIN_EMAILS is seeded as admin", async () => {
@@ -117,6 +128,22 @@ describe("users.store", () => {
     await expect(noEmail.mutation(api.users.store, {})).rejects.toMatchObject({
       data: { code: "EMAIL_MISSING" },
     });
+  });
+});
+
+describe("seed guard", () => {
+  test("refuses to write demo rows without the confirmation argument", async () => {
+    const t = setup();
+
+    await expect(t.mutation(internal.seed.dev, {})).rejects.toMatchObject({
+      data: { code: "SEED_NOT_CONFIRMED" },
+    });
+
+    const counts = await t.run(async (ctx) => ({
+      users: (await ctx.db.query("users").collect()).length,
+      tools: (await ctx.db.query("tools").collect()).length,
+    }));
+    expect(counts).toEqual({ users: 0, tools: 0 });
   });
 });
 
